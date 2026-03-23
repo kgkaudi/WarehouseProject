@@ -1,36 +1,33 @@
-using backend.Data;
 using backend.Models;
-using Microsoft.EntityFrameworkCore;
+using backend.Service;
+using MongoDB.Driver;
 
 namespace backend.Repositories;
 
 public class ProductRepository : IProductRepository
 {
-    private readonly WarehouseContext _context;
+    private readonly MongoDbService _mongo;
 
-    public ProductRepository(WarehouseContext context)
+    public ProductRepository(MongoDbService mongo)
     {
-        _context = context;
+        _mongo = mongo;
     }
 
     public async Task<IEnumerable<Product>> GetAllAsync() =>
-        await _context.Products.ToListAsync();
+        await _mongo.Products.Find(_ => true).ToListAsync();
 
-    public async Task<Product?> GetByIdAsync(int id) =>
-        await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+    public async Task<Product?> GetByIdAsync(string id) =>
+        await _mongo.Products.Find(p => p.Id == id).FirstOrDefaultAsync();
 
-    public async Task<IEnumerable<Product>> GetByUserIdAsync(int userId) =>
-        await _context.Products.Where(p => p.UserId == userId).ToListAsync();
+    public async Task<IEnumerable<Product>> GetByUserIdAsync(string userId) =>
+        await _mongo.Products.Find(p => p.UserId == userId).ToListAsync();
 
     public async Task AddAsync(Product product) =>
-        await _context.Products.AddAsync(product);
+        await _mongo.Products.InsertOneAsync(product);
 
-    public async Task DeleteAsync(Product product)
-    {
-        _context.Products.Remove(product);
-        await Task.CompletedTask;
-    }
+    public async Task UpdateAsync(Product product) =>
+        await _mongo.Products.ReplaceOneAsync(p => p.Id == product.Id, product);
 
-    public async Task SaveAsync() =>
-        await _context.SaveChangesAsync();
+    public async Task DeleteAsync(string id) =>
+        await _mongo.Products.DeleteOneAsync(p => p.Id == id);
 }

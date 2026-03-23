@@ -13,7 +13,7 @@ public class ProductService
         _products = products;
     }
 
-    public async Task<Product> CreateProductForUser(int userId, ProductCreateDto dto)
+    public async Task<Product> CreateProductForUser(string userId, ProductCreateDto dto)
     {
         var product = new Product
         {
@@ -26,12 +26,11 @@ public class ProductService
         };
 
         await _products.AddAsync(product);
-        await _products.SaveAsync();
 
         return product;
     }
 
-    public async Task<Product?> UpdateProduct(int userId, int productId, ProductUpdateDto dto)
+    public async Task<Product?> UpdateProduct(string userId, string productId, ProductUpdateDto dto)
     {
         var product = await _products.GetByIdAsync(productId);
         if (product == null || product.UserId != userId)
@@ -40,21 +39,20 @@ public class ProductService
         product.Name = dto.Name;
         product.Description = dto.Description;
         product.Dimensions = dto.Dimensions;
-        product.Price = (decimal)dto.Price;
+        product.Price = dto.Price;
         product.Weight = dto.Weight;
 
-        await _products.SaveAsync();
+        await _products.UpdateAsync(product);
         return product;
     }
 
-    public async Task<bool> DeleteProduct(int userId, int productId)
+    public async Task<bool> DeleteProduct(string userId, string productId)
     {
         var product = await _products.GetByIdAsync(productId);
         if (product == null || product.UserId != userId)
             return false;
 
-        await _products.DeleteAsync(product);
-        await _products.SaveAsync();
+        await _products.DeleteAsync(productId);
         return true;
     }
 }

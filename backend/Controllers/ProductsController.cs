@@ -23,7 +23,7 @@ namespace backend.Controllers
         [HttpGet("mine")]
         public async Task<ActionResult<IEnumerable<ProductReadDto>>> GetMyProducts()
         {
-            var userId = int.Parse(User.FindFirst("UserId")!.Value);
+            var userId = User.FindFirst("UserId")!.Value;
 
             var products = await _products.GetByUserIdAsync(userId);
 
@@ -33,7 +33,7 @@ namespace backend.Controllers
                 Name = p.Name,
                 Description = p.Description,
                 Dimensions = p.Dimensions,
-                Price = (decimal)p.Price,
+                Price = p.Price,
                 Weight = p.Weight
             });
 
@@ -44,7 +44,7 @@ namespace backend.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateProduct(ProductCreateDto dto)
         {
-            var userId = int.Parse(User.FindFirst("UserId")!.Value);
+            var userId = User.FindFirst("UserId")!.Value;
             var product = await _service.CreateProductForUser(userId, dto);
 
             return Ok(new ProductReadDto
@@ -53,16 +53,16 @@ namespace backend.Controllers
                 Name = product.Name,
                 Description = product.Description,
                 Dimensions = product.Dimensions,
-                Price = (decimal)product.Price,
+                Price = product.Price,
                 Weight = product.Weight
             });
         }
 
         [Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProduct(int id, ProductUpdateDto dto)
+        public async Task<IActionResult> UpdateProduct(string id, ProductUpdateDto dto)
         {
-            var userId = int.Parse(User.FindFirst("UserId")!.Value);
+            var userId = User.FindFirst("UserId")!.Value;
 
             var updated = await _service.UpdateProduct(userId, id, dto);
             if (updated == null)
@@ -74,16 +74,16 @@ namespace backend.Controllers
                 Name = updated.Name,
                 Description = updated.Description,
                 Dimensions = updated.Dimensions,
-                Price = (decimal)updated.Price,
+                Price = updated.Price,
                 Weight = updated.Weight
             });
         }
 
         [Authorize]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
+        public async Task<IActionResult> DeleteProduct(string id)
         {
-            var userId = int.Parse(User.FindFirst("UserId")!.Value);
+            var userId = User.FindFirst("UserId")!.Value;
 
             var success = await _service.DeleteProduct(userId, id);
             if (!success)
@@ -103,7 +103,7 @@ namespace backend.Controllers
                 Name = p.Name,
                 Description = p.Description,
                 Dimensions = p.Dimensions,
-                Price = (decimal)p.Price,
+                Price = p.Price,
                 Weight = p.Weight
             });
 

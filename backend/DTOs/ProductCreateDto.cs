@@ -14,7 +14,7 @@ public class ProductCreateDto
 
     public string Dimensions { get; set; } = string.Empty;
 
-    public decimal Price { get; set; }
+    public double Price { get; set; }
 
     [Range(0.01, double.MaxValue)]
     public double Weight { get; set; }

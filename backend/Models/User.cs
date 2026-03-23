@@ -1,8 +1,13 @@
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
 namespace backend.Models;
 
 public class User
 {
-    public int Id { get; set; }
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; }
 
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
@@ -20,6 +25,4 @@ public class User
 
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetTokenExpires { get; set; }
-
-    public List<Product> Products { get; set; } = new();
 }

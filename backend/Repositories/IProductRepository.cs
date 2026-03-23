@@ -6,9 +6,9 @@ namespace backend.Repositories;
 public interface IProductRepository
 {
     Task<IEnumerable<Product>> GetAllAsync();
-    Task<Product?> GetByIdAsync(int id);
-    Task<IEnumerable<Product>> GetByUserIdAsync(int userId);
+    Task<Product?> GetByIdAsync(string id);
+    Task<IEnumerable<Product>> GetByUserIdAsync(string userId);
     Task AddAsync(Product product);
-    Task DeleteAsync(Product product);
-    Task SaveAsync();
+    Task UpdateAsync(Product product);
+    Task DeleteAsync(string id);
 }

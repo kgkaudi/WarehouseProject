@@ -1,29 +1,24 @@
-using System;
-using backend.Data;
 using backend.Models;
-using Microsoft.EntityFrameworkCore;
+using backend.Service;
+using MongoDB.Driver;
 
 namespace backend.Repositories;
 
 public class UserRepository : IUserRepository
 {
-    private readonly WarehouseContext _context;
+    private readonly MongoDbService _mongo;
 
-    public UserRepository(WarehouseContext context)
+    public UserRepository(MongoDbService mongo)
     {
-        _context = context;
+        _mongo = mongo;
     }
 
     public async Task<IEnumerable<User>> GetAllAsync() =>
-        await _context.Users.Include(u => u.Products).ToListAsync();
+        await _mongo.Users.Find(_ => true).ToListAsync();
 
-    public async Task<User?> GetByIdAsync(int id) =>
-        await _context.Users.Include(u => u.Products)
-                            .FirstOrDefaultAsync(u => u.Id == id);
+    public async Task<User?> GetByIdAsync(string id) =>
+        await _mongo.Users.Find(u => u.Id == id).FirstOrDefaultAsync();
 
     public async Task AddAsync(User user) =>
-        await _context.Users.AddAsync(user);
-
-    public async Task SaveAsync() =>
-        await _context.SaveChangesAsync();
+        await _mongo.Users.InsertOneAsync(user);
 }
