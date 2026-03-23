@@ -1,0 +1,102 @@
+@backend_HostAddress = http://localhost:5266
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+@verificationToken = BD0ED28B0191D6D0CC70B388A903FA1AADDC420D5E6F29BDF57CC389D7C64AA4
+@signinToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiIxIiwiVXNlcm5hbWUiOiJrZ2thdWRpIiwiZXhwIjoxNzczNzA3MjI5fQ.RfhkL6BAK8wV7yePrmgyJmIep6JpiXB-nhIRDsIzxqo
+
+### AUTH: Register
+POST {{backend_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "kgkaudi",
+  "email": "kostaskgkaudi@gmail.com",
+  "password": "Ectoras01!",
+  "companyName": "Kostas Company AB",
+  "companyAddress": "Gustav Dalensgatan 6, Göteborg"
+}
+
+###
+
+### AUTH: Verify Email (paste verificationToken from register response)
+POST {{backend_HostAddress}}/api/auth/verify-email?token={{verificationToken}}
+
+###
+
+### AUTH: Login
+POST {{backend_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "kgkaudi",
+  "password": "Ectoras01!"
+}
+
+###
+
+### AUTH: Request Password Reset
+POST {{backend_HostAddress}}/api/auth/request-password-reset
+Content-Type: application/json
+
+{
+  "email": "alice@example.com"
+}
+
+###
+
+### AUTH: Reset Password (paste resetToken from previous response)
+POST {{backend_HostAddress}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "{{resetToken}}",
+  "newPassword": "NewPassword123!"
+}
+
+###
+
+### AUTH: Change Password (requires Bearer token)
+POST {{backend_HostAddress}}/api/auth/change-password
+Authorization: Bearer {{signinToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "NewPassword123!",
+  "newPassword": "AnotherPassword123!"
+}
+
+###
+
+### AUTH: Delete Account
+DELETE {{backend_HostAddress}}/api/auth/delete-account
+Authorization: Bearer {{signinToken}}
+
+###
+
+### PRODUCTS: Get My Products
+GET {{backend_HostAddress}}/api/products/mine
+Authorization: Bearer {{signinToken}}
+
+###
+
+### PRODUCTS: Create Product
+POST {{backend_HostAddress}}/api/products
+Authorization: Bearer {{signinToken}}
+Content-Type: application/json
+
+{
+  "name": "Pallet Jack",
+  "description": "Hydraulic pallet jack",
+  "dimensions": "120x80x30",
+  "price": 2499.99,
+  "weight": 85.5
+}
+
+###
+
+### PRODUCTS: Get All Products
+GET {{backend_HostAddress}}/api/products
+
+###
+
+### USERS: Get Users
+GET {{backend_HostAddress}}/api/users
