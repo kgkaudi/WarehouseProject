@@ -194,9 +194,10 @@ namespace backend.Controllers
 
             var claims = new[]
             {
-            new Claim("UserId", user.Id.ToString()),
-            new Claim("Username", user.Username)
-        };
+                new Claim("UserId", user.Id.ToString()),
+                new Claim("Username", user.Username),
+                new Claim(ClaimTypes.Role, user.Role)
+            };
 
             var token = new JwtSecurityToken(
                 claims: claims,

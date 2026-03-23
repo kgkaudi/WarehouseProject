@@ -7,16 +7,16 @@ public class User
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
-    public string Id { get; set; }
+    public string Id { get; set; } = null!;
 
-    public string Username { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
+    public string Username { get; set; } = null!;
+    public string Email { get; set; } = null!;
 
-    public string CompanyName { get; set; } = string.Empty;
-    public string CompanyAddress { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = null!;
+    public string CompanyAddress { get; set; } = null!;
 
-    public byte[] PasswordHash { get; set; } = Array.Empty<byte>();
-    public byte[] PasswordSalt { get; set; } = Array.Empty<byte>();
+    public byte[] PasswordHash { get; set; } = null!;
+    public byte[] PasswordSalt { get; set; } = null!;
 
     public bool EmailConfirmed { get; set; } = false;
 
@@ -25,4 +25,6 @@ public class User
 
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetTokenExpires { get; set; }
+    
+    public string Role { get; set; } = "user";
 }

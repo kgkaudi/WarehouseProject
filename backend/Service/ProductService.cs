@@ -21,6 +21,7 @@ public class ProductService
             Description = dto.Description,
             Dimensions = dto.Dimensions,
             Price = dto.Price,
+            Quantity = dto.Quantity,
             Weight = dto.Weight,
             UserId = userId
         };
@@ -40,6 +41,7 @@ public class ProductService
         product.Description = dto.Description;
         product.Dimensions = dto.Dimensions;
         product.Price = dto.Price;
+        product.Quantity = dto.Quantity;
         product.Weight = dto.Weight;
 
         await _products.UpdateAsync(product);

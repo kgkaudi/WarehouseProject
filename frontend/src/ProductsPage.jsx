@@ -28,6 +28,7 @@ export default function ProductsPage() {
     description: "",
     dimensions: "",
     price: "",
+    quantity: "",
     weight: ""
   });
 
@@ -38,6 +39,7 @@ export default function ProductsPage() {
     description: "",
     dimensions: "",
     price: "",
+    quantity: "",
     weight: ""
   });
 
@@ -62,6 +64,7 @@ export default function ProductsPage() {
       description: form.description,
       dimensions: form.dimensions,
       price: parseFloat(form.price),
+      quantity: parseInt(form.quantity) ?? "",
       weight: parseFloat(form.weight)
     });
     setForm({
@@ -69,6 +72,7 @@ export default function ProductsPage() {
       description: "",
       dimensions: "",
       price: "",
+      quantity: "",
       weight: ""
     });
     load();
@@ -85,6 +89,7 @@ export default function ProductsPage() {
       description: editForm.description,
       dimensions: editForm.dimensions,
       price: parseFloat(editForm.price),
+      quantity: parseInt(editForm.quantity) ?? "",
       weight: parseFloat(editForm.weight)
     });
     setEditOpen(false);
@@ -150,6 +155,12 @@ export default function ProductsPage() {
             onChange={handleChange("price")}
           />
           <TextField
+            label="Quantity"
+            type="number"
+            value={form.quantity}
+            onChange={handleChange("quantity")}
+          />
+          <TextField
             label="Weight"
             type="number"
             value={form.weight}
@@ -185,6 +196,12 @@ export default function ProductsPage() {
               type="number"
               value={editForm.price}
               onChange={handleEditChange("price")}
+            />
+            <TextField
+              label="Quantity"
+              type="number"
+              value={editForm.quantity}
+              onChange={handleEditChange("quantity")}
             />
             <TextField
               label="Weight"

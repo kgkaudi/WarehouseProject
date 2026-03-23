@@ -88,6 +88,7 @@ Content-Type: application/json
   "description": "Hydraulic pallet jack",
   "dimensions": "120x80x30",
   "price": 2499.99,
+  "quantity": 10,
   "weight": 85.5
 }
 

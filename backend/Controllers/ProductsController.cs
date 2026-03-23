@@ -34,6 +34,7 @@ namespace backend.Controllers
                 Description = p.Description,
                 Dimensions = p.Dimensions,
                 Price = p.Price,
+                Quantity = p.Quantity,
                 Weight = p.Weight
             });
 
@@ -54,6 +55,7 @@ namespace backend.Controllers
                 Description = product.Description,
                 Dimensions = product.Dimensions,
                 Price = product.Price,
+                Quantity = product.Quantity,
                 Weight = product.Weight
             });
         }
@@ -75,6 +77,7 @@ namespace backend.Controllers
                 Description = updated.Description,
                 Dimensions = updated.Dimensions,
                 Price = updated.Price,
+                Quantity = updated.Quantity,
                 Weight = updated.Weight
             });
         }
@@ -104,6 +107,7 @@ namespace backend.Controllers
                 Description = p.Description,
                 Dimensions = p.Dimensions,
                 Price = p.Price,
+                Quantity = p.Quantity,
                 Weight = p.Weight
             });
 

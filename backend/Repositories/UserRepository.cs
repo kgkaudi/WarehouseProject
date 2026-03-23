@@ -21,4 +21,9 @@ public class UserRepository : IUserRepository
 
     public async Task AddAsync(User user) =>
         await _mongo.Users.InsertOneAsync(user);
+    public async Task UpdateAsync(User user) =>
+        await _mongo.Users.ReplaceOneAsync(u => u.Id == user.Id, user);
+
+    public async Task DeleteAsync(string id) =>
+        await _mongo.Users.DeleteOneAsync(u => u.Id == id);
 }
