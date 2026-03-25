@@ -35,7 +35,9 @@ import CreateProductPage from "./pages/CreateProductPage.jsx";
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("darkMode") === "true";
+  });
 
   const theme = createTheme({
     palette: {
@@ -92,7 +94,14 @@ export default function App() {
                 </Typography>
 
                 {/* DARK MODE TOGGLE */}
-                <IconButton color="inherit" onClick={() => setDarkMode(!darkMode)}>
+                <IconButton
+                  color="inherit"
+                  onClick={() => {
+                    const newMode = !darkMode;
+                    setDarkMode(newMode);
+                    localStorage.setItem("darkMode", newMode);
+                  }}
+                >
                   {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
                 </IconButton>
 
