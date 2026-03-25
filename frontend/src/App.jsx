@@ -1,32 +1,35 @@
-import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from "react-router-dom";
 import { AppBar, Toolbar, Typography, Button, Container } from "@mui/material";
+import { useState } from "react";
+
 import AuthPage from "./pages/AuthPage.jsx";
 import ProductsPage from "./pages/ProductsPage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
+import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 
 export default function App() {
-  const [view, setView] = useState("auth");
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
 
   const logout = () => {
     localStorage.removeItem("token");
     setLoggedIn(false);
-    setView("auth");
   };
 
   return (
-    <>
+    <Router>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Warehouse App
           </Typography>
+
           {loggedIn && (
             <>
-              <Button color="inherit" onClick={() => setView("products")}>
+              <Button color="inherit" component={Link} to="/products">
                 Products
               </Button>
-              <Button color="inherit" onClick={() => setView("account")}>
+              <Button color="inherit" component={Link} to="/account">
                 Account
               </Button>
               <Button color="inherit" onClick={logout}>
@@ -36,18 +39,32 @@ export default function App() {
           )}
         </Toolbar>
       </AppBar>
+
       <Container sx={{ mt: 4 }}>
-        {!loggedIn && (
-          <AuthPage
-            onLoggedIn={() => {
-              setLoggedIn(true);
-              setView("products");
-            }}
-          />
-        )}
-        {loggedIn && view === "products" && <ProductsPage />}
-        {loggedIn && view === "account" && <AccountPage />}
+        <Routes>
+          {/* Public routes */}
+          {!loggedIn && (
+            <>
+              <Route
+                path="/login"
+                element={<AuthPage onLoggedIn={() => setLoggedIn(true)} />}
+              />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </>
+          )}
+
+          {/* Private routes */}
+          {loggedIn && (
+            <>
+              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/account" element={<AccountPage />} />
+              <Route path="*" element={<Navigate to="/products" replace />} />
+            </>
+          )}
+        </Routes>
       </Container>
-    </>
+    </Router>
   );
 }

@@ -1,71 +1,90 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   Box,
   TextField,
   Button,
   Typography,
   Paper,
-  Stack
+  Stack,
+  Snackbar,
+  Alert
 } from "@mui/material";
 import api from "../api";
 
 export default function AuthPage({ onLoggedIn }) {
+  const [verificationToken, setVerificationToken] = useState("");
   const [mode, setMode] = useState("login");
+
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success"
+  });
+
   const [form, setForm] = useState({
     username: "",
     email: "",
     password: "",
     companyName: "",
     companyAddress: "",
-    verificationToken: "",
     resetEmail: "",
     resetToken: "",
     newPassword: ""
   });
 
+  const navigate = useNavigate();
+
   const handleChange = (field) => (e) =>
     setForm({ ...form, [field]: e.target.value });
 
+  const showSnackbar = (message, severity = "success") => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const switchMode = (newMode) => {
+    setMode(newMode);
+  };
+
+  // -----------------------------
+  // REGISTER
+  // -----------------------------
   const register = async () => {
-    const res = await api.post("/auth/register", {
-      username: form.username,
-      email: form.email,
-      password: form.password,
-      companyName: form.companyName,
-      companyAddress: form.companyAddress
-    });
-    alert(
-      "Registered. Verification token:\n" + res.data.verificationToken
-    );
+    try {
+      const res = await api.post("/auth/register", {
+        username: form.username,
+        email: form.email,
+        password: form.password,
+        companyName: form.companyName,
+        companyAddress: form.companyAddress
+      });
+
+      setVerificationToken(res.data.verificationToken);
+      showSnackbar("Registered successfully! Your verification token is shown below.", "success");
+
+    } catch {
+      showSnackbar("Registration failed. Check your details.", "error");
+    }
   };
 
-  const verifyEmail = async () => {
-    await api.post(`/auth/verify-email?token=${form.verificationToken}`);
-    alert("Email verified. You can now log in.");
-  };
-
+  // -----------------------------
+  // LOGIN
+  // -----------------------------
   const login = async () => {
-    const res = await api.post("/auth/login", {
-      username: form.username,
-      password: form.password
-    });
-    localStorage.setItem("token", res.data.token);
-    onLoggedIn();
-  };
+    try {
+      const res = await api.post("/auth/login", {
+        username: form.username,
+        password: form.password
+      });
 
-  const requestReset = async () => {
-    const res = await api.post("/auth/request-password-reset", {
-      email: form.resetEmail
-    });
-    alert("Reset token:\n" + res.data.resetToken);
-  };
+      showSnackbar("Login successful!", "success");
+      localStorage.setItem("token", res.data.token);
+      onLoggedIn();
 
-  const resetPassword = async () => {
-    await api.post("/auth/reset-password", {
-      token: form.resetToken,
-      newPassword: form.newPassword
-    });
-    alert("Password reset. You can log in with new password.");
+    } catch {
+      showSnackbar("Invalid username or password.", "error");
+    }
   };
 
   return (
@@ -75,111 +94,75 @@ export default function AuthPage({ onLoggedIn }) {
           {mode === "login" ? "Login" : "Register"}
         </Typography>
 
+        {/* REGISTER MODE */}
         {mode === "register" && (
           <>
-            <TextField
-              label="Username"
-              value={form.username}
-              onChange={handleChange("username")}
-            />
-            <TextField
-              label="Email"
-              value={form.email}
-              onChange={handleChange("email")}
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={form.password}
-              onChange={handleChange("password")}
-            />
-            <TextField
-              label="Company Name"
-              value={form.companyName}
-              onChange={handleChange("companyName")}
-            />
-            <TextField
-              label="Company Address"
-              value={form.companyAddress}
-              onChange={handleChange("companyAddress")}
-            />
-            <Button variant="contained" onClick={register}>
-              Register
-            </Button>
-            <Button onClick={() => setMode("login")}>
-              Already have an account? Login
-            </Button>
+            <TextField label="Username" value={form.username} onChange={handleChange("username")} />
+            <TextField label="Email" value={form.email} onChange={handleChange("email")} />
+            <TextField label="Password" type="password" value={form.password} onChange={handleChange("password")} />
+            <TextField label="Company Name" value={form.companyName} onChange={handleChange("companyName")} />
+            <TextField label="Company Address" value={form.companyAddress} onChange={handleChange("companyAddress")} />
+
+            <Button variant="contained" onClick={register}>Register</Button>
+
+            {/* VERIFICATION TOKEN BOX */}
+            {verificationToken && (
+              <Box
+                sx={{
+                  p: 2,
+                  mb: 2,
+                  borderRadius: 1,
+                  bgcolor: "#e3f2fd",
+                  border: "1px solid #90caf9"
+                }}
+              >
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                  Your verification token
+                </Typography>
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <TextField value={verificationToken} fullWidth InputProps={{ readOnly: true }} />
+                  <Button variant="contained" onClick={() => navigator.clipboard.writeText(verificationToken)}>
+                    Copy
+                  </Button>
+                </Box>
+              </Box>
+            )}
+
+            <Button onClick={() => switchMode("login")}>Already have an account? Login</Button>
           </>
         )}
 
+        {/* LOGIN MODE */}
         {mode === "login" && (
           <>
-            <TextField
-              label="Username"
-              value={form.username}
-              onChange={handleChange("username")}
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={form.password}
-              onChange={handleChange("password")}
-            />
-            <Button variant="contained" onClick={login}>
-              Login
-            </Button>
-            <Button onClick={() => setMode("register")}>
-              Need an account? Register
-            </Button>
+            <TextField label="Username" value={form.username} onChange={handleChange("username")} />
+            <TextField label="Password" type="password" value={form.password} onChange={handleChange("password")} />
+
+            <Button variant="contained" onClick={login}>Login</Button>
+            <Button onClick={() => switchMode("register")}>Need an account? Register</Button>
           </>
         )}
 
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="subtitle1">Email Verification</Typography>
-          <TextField
-            label="Verification Token"
-            fullWidth
-            value={form.verificationToken}
-            onChange={handleChange("verificationToken")}
-            sx={{ mt: 1 }}
-          />
-          <Button sx={{ mt: 1 }} onClick={verifyEmail}>
-            Verify Email
-          </Button>
-        </Box>
-
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="subtitle1">Password Reset</Typography>
-          <TextField
-            label="Email"
-            fullWidth
-            value={form.resetEmail}
-            onChange={handleChange("resetEmail")}
-            sx={{ mt: 1 }}
-          />
-          <Button sx={{ mt: 1 }} onClick={requestReset}>
-            Request Reset Token
-          </Button>
-          <TextField
-            label="Reset Token"
-            fullWidth
-            value={form.resetToken}
-            onChange={handleChange("resetToken")}
-            sx={{ mt: 1 }}
-          />
-          <TextField
-            label="New Password"
-            type="password"
-            fullWidth
-            value={form.newPassword}
-            onChange={handleChange("newPassword")}
-            sx={{ mt: 1 }}
-          />
-          <Button sx={{ mt: 1 }} onClick={resetPassword}>
-            Reset Password
-          </Button>
-        </Box>
+        <Button onClick={() => navigate("/verify-email")}>Verify Email</Button>
+        <Button onClick={() => navigate("/reset-password")}>Forgot Password?</Button>
       </Stack>
+
+      {/* SNACKBAR */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 }

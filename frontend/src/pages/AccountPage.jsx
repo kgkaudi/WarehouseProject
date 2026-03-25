@@ -4,7 +4,8 @@ import {
   Typography,
   TextField,
   Button,
-  Stack
+  Stack,
+  Box
 } from "@mui/material";
 import api from "../api";
 
@@ -14,26 +15,75 @@ export default function AccountPage() {
     newPassword: ""
   });
 
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
   const handleChange = (field) => (e) =>
     setChangeForm({ ...changeForm, [field]: e.target.value });
 
   const changePassword = async () => {
-    await api.post("/auth/change-password", changeForm);
-    alert("Password changed");
-    setChangeForm({ currentPassword: "", newPassword: "" });
+    try {
+      await api.post("/auth/change-password", changeForm);
+      setError("");
+      setMessage("Password changed successfully.");
+      setChangeForm({ currentPassword: "", newPassword: "" });
+    } catch (err) {
+      setMessage("");
+      setError("Current password incorrect.");
+    }
   };
 
   const deleteAccount = async () => {
     if (!confirm("Are you sure you want to delete your account?")) return;
-    await api.delete("/auth/delete-account");
-    alert("Account deleted. Clear token manually in this dev UI.");
+
+    try {
+      await api.delete("/auth/delete-account");
+      setError("");
+      setMessage("Account deleted. Please clear your token and log out.");
+    } catch (err) {
+      setMessage("");
+      setError("Failed to delete account.");
+    }
   };
 
   return (
     <Stack spacing={3}>
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6">Change Password</Typography>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+
+        {/* Success message */}
+        {message && (
+          <Box
+            sx={{
+              p: 2,
+              mt: 2,
+              borderRadius: 1,
+              bgcolor: "#e8f5e9",
+              border: "1px solid #81c784",
+              color: "#2e7d32"
+            }}
+          >
+            {message}
+          </Box>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <Box
+            sx={{
+              p: 2,
+              mt: 2,
+              borderRadius: 1,
+              bgcolor: "#ffebee",
+              border: "1px solid #ef9a9a",
+              color: "#c62828"
+            }}
+          >
+            {error}
+          </Box>
+        )}
+
+        <Stack spacing={2} sx={{ mt: 2 }}>
           <TextField
             label="Current Password"
             type="password"
