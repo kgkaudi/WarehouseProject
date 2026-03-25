@@ -6,6 +6,7 @@ import {
   Button,
   Stack,
   List,
+  Box,
   ListItem,
   ListItemText,
   IconButton,
@@ -92,8 +93,9 @@ export default function ProductsPage() {
           {products.map((p) => (
             <ListItem
               key={p.id}
+              disableGutters
               secondaryAction={
-                <>
+                <Box sx={{ display: "flex", gap: 1, minWidth: 80 }}>
                   <IconButton onClick={() => openEdit(p)}>
                     <EditIcon />
                   </IconButton>
@@ -106,13 +108,24 @@ export default function ProductsPage() {
                   >
                     <DeleteIcon color="error" />
                   </IconButton>
-                </>
+                </Box>
               }
             >
               <ListItemText
                 primary={`${p.name} — ${p.price} SEK`}
-                secondary={`${p.description} Dimansions: ${p.dimensions} — Weight: ${p.weight} kg Quantity: ${p.quantity}`}
-              />              
+                secondary={
+                  <>
+                    {p.description}
+                    <br />
+                    Dimensions: {p.dimensions}
+                    <br />
+                    Weight: {p.weight} kg
+                    <br />
+                    Quantity: {p.quantity}
+                  </>
+                }
+                sx={{ pr: 10 }}   // <-- gives space so text never overlaps icons
+              />
             </ListItem>
           ))}
         </List>
