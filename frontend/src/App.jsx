@@ -7,6 +7,7 @@ import ProductsPage from "./pages/ProductsPage.jsx";
 import AccountPage from "./pages/AccountPage.jsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
+import CreateProductPage from "./pages/CreateProductPage.jsx";
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="/products" element={<ProductsPage />} />
               <Route path="/account" element={<AccountPage />} />
               <Route path="*" element={<Navigate to="/products" replace />} />
+              <Route path="/products/create" element={<CreateProductPage />} />
             </>
           )}
         </Routes>

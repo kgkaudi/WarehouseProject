@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogActions
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -23,15 +24,7 @@ import api from "../api";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    dimensions: "",
-    price: "",
-    quantity: "",
-    weight: ""
-  });
-
+  
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     id: null,
@@ -52,31 +45,10 @@ export default function ProductsPage() {
     load();
   }, []);
 
-  const handleChange = (field) => (e) =>
-    setForm({ ...form, [field]: e.target.value });
+  const navigate = useNavigate();
 
   const handleEditChange = (field) => (e) =>
     setEditForm({ ...editForm, [field]: e.target.value });
-
-  const create = async () => {
-    await api.post("/products", {
-      name: form.name,
-      description: form.description,
-      dimensions: form.dimensions,
-      price: parseFloat(form.price),
-      quantity: parseInt(form.quantity) ?? "",
-      weight: parseFloat(form.weight)
-    });
-    setForm({
-      name: "",
-      description: "",
-      dimensions: "",
-      price: "",
-      quantity: "",
-      weight: ""
-    });
-    load();
-  };
 
   const openEdit = (product) => {
     setEditForm(product);
@@ -104,6 +76,14 @@ export default function ProductsPage() {
 
   return (
     <Stack spacing={3}>
+      <Button
+        variant="contained"
+        sx={{ mb: 2, alignSelf: "flex-start" }}
+        onClick={() => navigate("/products/create")}
+      >
+        Create Product
+      </Button>
+
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6">My Products</Typography>
         <List>
@@ -128,48 +108,6 @@ export default function ProductsPage() {
             </ListItem>
           ))}
         </List>
-      </Paper>
-
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="h6">Create Product</Typography>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          <TextField
-            label="Name"
-            value={form.name}
-            onChange={handleChange("name")}
-          />
-          <TextField
-            label="Description"
-            value={form.description}
-            onChange={handleChange("description")}
-          />
-          <TextField
-            label="Dimensions"
-            value={form.dimensions}
-            onChange={handleChange("dimensions")}
-          />
-          <TextField
-            label="Price"
-            type="number"
-            value={form.price}
-            onChange={handleChange("price")}
-          />
-          <TextField
-            label="Quantity"
-            type="number"
-            value={form.quantity}
-            onChange={handleChange("quantity")}
-          />
-          <TextField
-            label="Weight"
-            type="number"
-            value={form.weight}
-            onChange={handleChange("weight")}
-          />
-          <Button variant="contained" onClick={create}>
-            Create
-          </Button>
-        </Stack>
       </Paper>
 
       <Dialog open={editOpen} onClose={() => setEditOpen(false)}>
