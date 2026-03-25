@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { AppBar, Toolbar, Typography, Button, Container } from "@mui/material";
-import AuthPage from "./AuthPage.jsx";
-import ProductsPage from "./ProductsPage.jsx";
-import AccountPage from "./AccountPage.jsx";
+import AuthPage from "./pages/AuthPage.jsx";
+import ProductsPage from "./pages/ProductsPage.jsx";
+import AccountPage from "./pages/AccountPage.jsx";
 
 export default function App() {
   const [view, setView] = useState("auth");

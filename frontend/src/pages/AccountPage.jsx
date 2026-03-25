@@ -6,7 +6,7 @@ import {
   Button,
   Stack
 } from "@mui/material";
-import api from "./api";
+import api from "../api";
 
 export default function AccountPage() {
   const [changeForm, setChangeForm] = useState({

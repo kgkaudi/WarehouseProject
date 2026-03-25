@@ -19,7 +19,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
 
-import api from "./api";
+import api from "../api";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);

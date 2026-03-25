@@ -7,7 +7,7 @@ import {
   Paper,
   Stack
 } from "@mui/material";
-import api from "./api";
+import api from "../api";
 
 export default function AuthPage({ onLoggedIn }) {
   const [mode, setMode] = useState("login");
