@@ -19,12 +19,11 @@ import { useNavigate } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-
 import api from "../api";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
-  
+
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     id: null,
@@ -36,6 +35,11 @@ export default function ProductsPage() {
     weight: ""
   });
 
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
+  const navigate = useNavigate();
+
   const load = async () => {
     const res = await api.get("/products/mine");
     setProducts(res.data);
@@ -44,8 +48,6 @@ export default function ProductsPage() {
   useEffect(() => {
     load();
   }, []);
-
-  const navigate = useNavigate();
 
   const handleEditChange = (field) => (e) =>
     setEditForm({ ...editForm, [field]: e.target.value });
@@ -68,9 +70,9 @@ export default function ProductsPage() {
     load();
   };
 
-  const remove = async (id) => {
-    if (!confirm("Delete this product?")) return;
-    await api.delete(`/products/${id}`);
+  const remove = async () => {
+    await api.delete(`/products/${deleteId}`);
+    setDeleteOpen(false);
     load();
   };
 
@@ -95,7 +97,13 @@ export default function ProductsPage() {
                   <IconButton onClick={() => openEdit(p)}>
                     <EditIcon />
                   </IconButton>
-                  <IconButton onClick={() => remove(p.id)}>
+
+                  <IconButton
+                    onClick={() => {
+                      setDeleteId(p.id);
+                      setDeleteOpen(true);
+                    }}
+                  >
                     <DeleteIcon color="error" />
                   </IconButton>
                 </>
@@ -105,11 +113,16 @@ export default function ProductsPage() {
                 primary={`${p.name} — ${p.price} SEK`}
                 secondary={p.description}
               />
+              <ListItemText
+                primary={`Dimansions: ${p.dimensions} — Weight: ${p.weight} kg`}
+                secondary={`Quantity: ${p.quantity}`}
+              />
             </ListItem>
           ))}
         </List>
       </Paper>
 
+      {/* EDIT DIALOG */}
       <Dialog open={editOpen} onClose={() => setEditOpen(false)}>
         <DialogTitle>Edit Product</DialogTitle>
         <DialogContent>
@@ -153,6 +166,22 @@ export default function ProductsPage() {
           <Button onClick={() => setEditOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={saveEdit}>
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* DELETE CONFIRMATION DIALOG */}
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+        <DialogTitle>Delete Product</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this product? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={remove}>
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

@@ -5,7 +5,11 @@ import {
   TextField,
   Button,
   Stack,
-  Box
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from "@mui/material";
 import api from "../api";
 
@@ -17,6 +21,8 @@ export default function AccountPage() {
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleChange = (field) => (e) =>
     setChangeForm({ ...changeForm, [field]: e.target.value });
@@ -34,12 +40,11 @@ export default function AccountPage() {
   };
 
   const deleteAccount = async () => {
-    if (!confirm("Are you sure you want to delete your account?")) return;
-
     try {
       await api.delete("/auth/delete-account");
       setError("");
       setMessage("Account deleted. Please clear your token and log out.");
+      setDeleteOpen(false);
     } catch (err) {
       setMessage("");
       setError("Failed to delete account.");
@@ -51,7 +56,6 @@ export default function AccountPage() {
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6">Change Password</Typography>
 
-        {/* Success message */}
         {message && (
           <Box
             sx={{
@@ -67,7 +71,6 @@ export default function AccountPage() {
           </Box>
         )}
 
-        {/* Error message */}
         {error && (
           <Box
             sx={{
@@ -106,10 +109,31 @@ export default function AccountPage() {
         <Typography variant="h6" color="error">
           Danger Zone
         </Typography>
-        <Button color="error" variant="contained" onClick={deleteAccount}>
+
+        <Button
+          color="error"
+          variant="contained"
+          onClick={() => setDeleteOpen(true)}
+        >
           Delete Account
         </Button>
       </Paper>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
+        <DialogTitle>Delete Account</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete your account? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={deleteAccount}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }
