@@ -6,9 +6,9 @@ namespace backend.Repositories;
 
 public class ProductRepository : IProductRepository
 {
-    private readonly MongoDbService _mongo;
+    private readonly IMongoDbService _mongo;
 
-    public ProductRepository(MongoDbService mongo)
+    public ProductRepository(IMongoDbService mongo)
     {
         _mongo = mongo;
     }

@@ -4,7 +4,7 @@ using backend.Models;
 
 namespace backend.Service;
 
-public class ProductService
+public class ProductService : IProductService
 {
     private readonly IProductRepository _products;
 

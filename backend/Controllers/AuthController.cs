@@ -7,8 +7,7 @@ using backend.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authorization;
-using backend.Service;
-using MongoDB.Driver;
+using backend.Repositories;
 
 namespace backend.Controllers
 {
@@ -16,22 +15,22 @@ namespace backend.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly MongoDbService _mongo;
+        private readonly IUserRepository _users;
         private readonly IConfiguration _config;
 
-        public AuthController(MongoDbService mongo, IConfiguration config)
+        public AuthController(IUserRepository users, IConfiguration config)
         {
-            _mongo = mongo;
+            _users = users;
             _config = config;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(UserRegisterDto dto)
         {
-            if (await _mongo.Users.Find(u => u.Username == dto.Username).AnyAsync())
+            if (await _users.UsernameExistsAsync(dto.Username))
                 return BadRequest("Username already exists");
 
-            if (await _mongo.Users.Find(u => u.Email == dto.Email).AnyAsync())
+            if (await _users.EmailExistsAsync(dto.Email))
                 return BadRequest("Email already exists");
 
             CreatePasswordHash(dto.Password, out byte[] hash, out byte[] salt);
@@ -47,10 +46,12 @@ namespace backend.Controllers
                 PasswordHash = hash,
                 PasswordSalt = salt,
                 EmailVerificationToken = verificationToken,
-                EmailVerificationTokenExpires = DateTime.UtcNow.AddHours(24)
+                EmailVerificationTokenExpires = DateTime.UtcNow.AddHours(24),
+                Role = "user",
+                EmailConfirmed = false
             };
 
-            await _mongo.Users.InsertOneAsync(user);
+            await _users.CreateAsync(user);
 
             return Ok(new
             {
@@ -59,31 +60,27 @@ namespace backend.Controllers
             });
         }
 
-
         [HttpPost("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromQuery] string token)
         {
-            var user = await _mongo.Users.Find(u =>
-                u.EmailVerificationToken == token &&
-                u.EmailVerificationTokenExpires > DateTime.UtcNow).FirstOrDefaultAsync();
+            var user = await _users.GetByEmailVerificationTokenAsync(token);
 
-            if (user == null)
+            if (user == null || user.EmailVerificationTokenExpires <= DateTime.UtcNow)
                 return BadRequest("Invalid or expired token");
 
             user.EmailConfirmed = true;
             user.EmailVerificationToken = null;
             user.EmailVerificationTokenExpires = null;
 
-            await _mongo.Users.ReplaceOneAsync(u => u.Id == user.Id, user);
+            await _users.UpdateAsync(user);
 
             return Ok("Email verified");
         }
 
-
         [HttpPost("login")]
         public async Task<IActionResult> Login(UserLoginDto dto)
         {
-            var user = await _mongo.Users.Find(u => u.Username == dto.Username).FirstOrDefaultAsync();
+            var user = await _users.GetByUsernameAsync(dto.Username);
             if (user == null)
                 return Unauthorized("Invalid username or password");
 
@@ -100,14 +97,14 @@ namespace backend.Controllers
         [HttpPost("request-password-reset")]
         public async Task<IActionResult> RequestPasswordReset(PasswordResetRequestDto dto)
         {
-            var user = await _mongo.Users.Find(u => u.Email == dto.Email).FirstOrDefaultAsync();
+            var user = await _users.GetByEmailAsync(dto.Email);
             if (user == null)
                 return Ok("If the email exists, a reset token will be returned.");
 
             user.PasswordResetToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
             user.PasswordResetTokenExpires = DateTime.UtcNow.AddHours(1);
 
-            await _mongo.Users.ReplaceOneAsync(u => u.Id == user.Id, user);
+            await _users.UpdateAsync(user);
 
             return Ok(new
             {
@@ -119,11 +116,9 @@ namespace backend.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword(PasswordResetDto dto)
         {
-            var user = await _mongo.Users.Find(u =>
-                u.PasswordResetToken == dto.Token &&
-                u.PasswordResetTokenExpires > DateTime.UtcNow).FirstOrDefaultAsync();
+            var user = await _users.GetByPasswordResetTokenAsync(dto.Token);
 
-            if (user == null)
+            if (user == null || user.PasswordResetTokenExpires <= DateTime.UtcNow)
                 return BadRequest("Invalid or expired token");
 
             CreatePasswordHash(dto.NewPassword, out byte[] hash, out byte[] salt);
@@ -133,7 +128,7 @@ namespace backend.Controllers
             user.PasswordResetToken = null;
             user.PasswordResetTokenExpires = null;
 
-            await _mongo.Users.ReplaceOneAsync(u => u.Id == user.Id, user);
+            await _users.UpdateAsync(user);
 
             return Ok("Password reset successful");
         }
@@ -143,7 +138,10 @@ namespace backend.Controllers
         public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
         {
             var userId = User.FindFirst("UserId")!.Value;
-            var user = await _mongo.Users.Find(u => u.Id == userId).FirstOrDefaultAsync();
+            var user = await _users.GetByIdAsync(userId);
+
+            if (user == null)
+                return Unauthorized("User not found");
 
             if (!VerifyPassword(dto.CurrentPassword, user.PasswordHash, user.PasswordSalt))
                 return Unauthorized("Current password incorrect");
@@ -153,7 +151,7 @@ namespace backend.Controllers
             user.PasswordHash = hash;
             user.PasswordSalt = salt;
 
-            await _mongo.Users.ReplaceOneAsync(u => u.Id == user.Id, user);
+            await _users.UpdateAsync(user);
 
             return Ok("Password changed");
         }
@@ -164,11 +162,10 @@ namespace backend.Controllers
         {
             var userId = User.FindFirst("UserId")!.Value;
 
-            await _mongo.Users.DeleteOneAsync(u => u.Id == userId);
+            await _users.DeleteAsync(userId);
 
             return Ok("Account deleted");
         }
-
 
         private void CreatePasswordHash(string password, out byte[] hash, out byte[] salt)
         {
@@ -194,7 +191,7 @@ namespace backend.Controllers
 
             var claims = new[]
             {
-                new Claim("UserId", user.Id.ToString()),
+                new Claim("UserId", user.Id),
                 new Claim("Username", user.Username),
                 new Claim(ClaimTypes.Role, user.Role)
             };

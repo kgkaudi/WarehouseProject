@@ -1,40 +1,37 @@
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using backend.Service;
-using MongoDB.Driver;
+using backend.Repositories;
 
 namespace backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Policy = "AdminOnly")]   // Only admins allowed
+    [Authorize(Policy = "AdminOnly")]
     public class AdminController : ControllerBase
     {
+        private readonly IUserRepository _users;
 
-        private readonly MongoDbService _mongo;
-
-        public AdminController(MongoDbService mongo)
+        public AdminController(IUserRepository users)
         {
-            _mongo = mongo;
+            _users = users;
         }
 
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
-            var users = await _mongo.Users.Find(_ => true).ToListAsync();
+            var users = await _users.GetAllAsync();
             return Ok(users);
         }
 
         [HttpPut("promote/{id}")]
         public async Task<IActionResult> PromoteToAdmin(string id)
         {
-            var user = await _mongo.Users.Find(u => u.Id == id).FirstOrDefaultAsync();
+            var user = await _users.GetByIdAsync(id);
             if (user == null)
                 return NotFound("User not found");
 
             user.Role = "admin";
-            await _mongo.Users.ReplaceOneAsync(u => u.Id == id, user);
+            await _users.UpdateAsync(user);
 
             return Ok("User promoted to admin");
         }
@@ -42,10 +39,11 @@ namespace backend.Controllers
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
-            var result = await _mongo.Users.DeleteOneAsync(u => u.Id == id);
-            if (result.DeletedCount == 0)
+            var user = await _users.GetByIdAsync(id);
+            if (user == null)
                 return NotFound("User not found");
 
+            await _users.DeleteAsync(id);
             return Ok("User deleted");
         }
     }

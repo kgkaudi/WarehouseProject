@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 
 namespace backend.Service;
 
-public class MongoDbService
+public class MongoDbService : IMongoDbService
 {
     private readonly IMongoDatabase _database;
 

@@ -10,10 +10,10 @@ namespace backend.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly ProductService _service;
+        private readonly IProductService _service;
         private readonly IProductRepository _products;
 
-        public ProductsController(ProductService service, IProductRepository products)
+        public ProductsController(IProductService service, IProductRepository products)
         {
             _service = service;
             _products = products;
