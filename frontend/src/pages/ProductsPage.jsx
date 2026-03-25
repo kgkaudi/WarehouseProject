@@ -111,12 +111,8 @@ export default function ProductsPage() {
             >
               <ListItemText
                 primary={`${p.name} — ${p.price} SEK`}
-                secondary={p.description}
-              />
-              <ListItemText
-                primary={`Dimansions: ${p.dimensions} — Weight: ${p.weight} kg`}
-                secondary={`Quantity: ${p.quantity}`}
-              />
+                secondary={`${p.description} Dimansions: ${p.dimensions} — Weight: ${p.weight} kg Quantity: ${p.quantity}`}
+              />              
             </ListItem>
           ))}
         </List>
