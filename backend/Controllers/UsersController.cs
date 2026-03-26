@@ -31,6 +31,7 @@ namespace backend.Controllers
                     Username = u.Username,
                     CompanyName = u.CompanyName,
                     CompanyAddress = u.CompanyAddress,
+                    Role = u.Role,
                     Products = products.Select(p => new ProductReadDto
                     {
                         Id = p.Id,
