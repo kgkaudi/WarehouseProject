@@ -31,6 +31,7 @@ import AccountPage from "./pages/AccountPage.jsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 import CreateProductPage from "./pages/CreateProductPage.jsx";
+import AdminPage from "./pages/AdminPage.jsx";
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
@@ -123,6 +124,20 @@ export default function App() {
                       </Button>
                     ))}
 
+                    {localStorage.getItem("role") === "admin" && (
+                      <Button
+                        color="inherit"
+                        component={Link}
+                        to="/admin"
+                        sx={{
+                          borderBottom: isActive("/admin") ? "2px solid white" : "none",
+                          borderRadius: 0
+                        }}
+                      >
+                        Admin
+                      </Button>
+                    )}
+
                     <Button color="inherit" onClick={logout}>
                       Logout
                     </Button>
@@ -152,6 +167,19 @@ export default function App() {
                       </ListItemButton>
                     </ListItem>
                   ))}
+
+                  {localStorage.getItem("role") === "admin" && (
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        component={Link}
+                        to="/admin"
+                        selected={isActive("/admin")}
+                        onClick={() => setDrawerOpen(false)}
+                      >
+                        <ListItemText primary="Admin" />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
 
                   <ListItem disablePadding>
                     <ListItemButton onClick={logout}>
@@ -183,6 +211,7 @@ export default function App() {
                     <Route path="/products/create" element={<CreateProductPage />} />
                     <Route path="/account" element={<AccountPage />} />
                     <Route path="*" element={<Navigate to="/products" replace />} />
+                    <Route path="/admin" element={<AdminPage />} />                    
                   </>
                 )}
               </Routes>

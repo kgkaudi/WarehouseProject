@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { TextField, IconButton, InputAdornment } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 import {
   Box,
-  TextField,
   Button,
   Typography,
   Paper,
@@ -35,6 +37,7 @@ export default function AuthPage({ onLoggedIn }) {
   });
 
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (field) => (e) =>
     setForm({ ...form, [field]: e.target.value });
@@ -81,6 +84,7 @@ export default function AuthPage({ onLoggedIn }) {
       showSnackbar("Login successful!", "success");
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("username", res.data.username);
+      localStorage.setItem("role", res.data.role);
       onLoggedIn();
 
     } catch {
@@ -100,7 +104,21 @@ export default function AuthPage({ onLoggedIn }) {
           <>
             <TextField label="Username" value={form.username} onChange={handleChange("username")} />
             <TextField label="Email" value={form.email} onChange={handleChange("email")} />
-            <TextField label="Password" type="password" value={form.password} onChange={handleChange("password")} />
+            <TextField
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              value={form.password}
+              onChange={handleChange("password")}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
+            />
             <TextField label="Company Name" value={form.companyName} onChange={handleChange("companyName")} />
             <TextField label="Company Address" value={form.companyAddress} onChange={handleChange("companyAddress")} />
 
@@ -137,11 +155,32 @@ export default function AuthPage({ onLoggedIn }) {
         {/* LOGIN MODE */}
         {mode === "login" && (
           <>
-            <TextField label="Username" value={form.username} onChange={handleChange("username")} />
-            <TextField label="Password" type="password" value={form.password} onChange={handleChange("password")} />
+            <TextField
+              label="Username"
+              value={form.username}
+              onChange={handleChange("username")}
+            />
+
+            <TextField
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              value={form.password}
+              onChange={handleChange("password")}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
+            />
 
             <Button variant="contained" onClick={login}>Login</Button>
-            <Button onClick={() => switchMode("register")}>Need an account? Register</Button>
+            <Button onClick={() => switchMode("register")}>
+              Need an account? Register
+            </Button>
           </>
         )}
 

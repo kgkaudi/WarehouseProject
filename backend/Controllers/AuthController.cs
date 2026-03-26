@@ -91,7 +91,7 @@ namespace backend.Controllers
                 return Unauthorized("Email not verified");
 
             var token = GenerateJwtToken(user);
-            return Ok(new { token, username = user.Username });
+            return Ok(new { token, username = user.Username, role = user.Role });
         }
 
         [HttpPost("request-password-reset")]
