@@ -80,6 +80,7 @@ export default function AuthPage({ onLoggedIn }) {
 
       showSnackbar("Login successful!", "success");
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("username", res.data.username);
       onLoggedIn();
 
     } catch {
