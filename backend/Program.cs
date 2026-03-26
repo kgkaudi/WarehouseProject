@@ -12,7 +12,6 @@ builder.Services.AddControllers();
 builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection("MongoDbSettings"));
 
-// builder.Services.AddSingleton<MongoDbService>();
 builder.Services.AddSingleton<IMongoDbService, MongoDbService>();
 
 builder.Services.AddEndpointsApiExplorer();

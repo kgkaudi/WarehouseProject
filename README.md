@@ -127,14 +127,11 @@ backend/appsettings.Development.json
 Example:
 
 {
-  "ConnectionStrings": {
-    "MongoDb": "mongodb://localhost:27017"
+  "JwtKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30",
+  "MongoDbSettings": {
+    "ConnectionString": "mongodb://localhost:27017/WarehouseDb",
+    "DatabaseName": "WarehouseDb"
   },
-  "Jwt": {
-    "Key": "your-secret-key",
-    "Issuer": "your-app",
-    "Audience": "your-app"
-  }
 }
 
 📜 License
