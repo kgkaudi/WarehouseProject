@@ -91,10 +91,30 @@ export default function AdminPage() {
 
         <List>
           {users.map((u) => (
-            <ListItem
-              key={u.id}
-              secondaryAction={
-                <Box sx={{ display: "flex", gap: 1 }}>
+            <ListItem key={u.id} sx={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  width: "100%",
+                  flexWrap: "wrap",
+                  gap: 1
+                }}
+              >
+                <ListItemText
+                  primary={`${u.username} (${u.role})`}
+                  secondary={`Company: ${u.companyName} — Products: ${u.products.length}`}
+                  sx={{ flex: "1 1 auto", minWidth: 0 }}
+                />
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 1,
+                    flexShrink: 0,
+                    flexWrap: "wrap"
+                  }}
+                >
                   <IconButton onClick={() => openEdit(u)}>
                     <EditIcon />
                   </IconButton>
@@ -118,12 +138,7 @@ export default function AdminPage() {
                     </IconButton>
                   )}
                 </Box>
-              }
-            >
-              <ListItemText
-                primary={`${u.username} (${u.role})`}
-                secondary={`Company: ${u.companyName} — Products: ${u.products.length}`}
-              />
+              </Box>
             </ListItem>
           ))}
         </List>
