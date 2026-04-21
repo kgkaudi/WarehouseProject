@@ -43,9 +43,10 @@ public class ProductsControllerTests
         };
     }
 
-    // ---------------------------
+    // ---------------------------------------------------------
     // GET /mine
-    // ---------------------------
+    // ---------------------------------------------------------
+
     [Fact]
     public async Task GetMyProducts_ReturnsProductsForUser()
     {
@@ -68,9 +69,24 @@ public class ProductsControllerTests
         Assert.Equal(2, dto.Count());
     }
 
-    // ---------------------------
+    [Fact]
+    public async Task GetMyProducts_RepositoryThrows_Returns500()
+    {
+        SetUser("user123");
+
+        _mockRepo.Setup(r => r.GetByUserIdAsync("user123"))
+                 .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.GetMyProducts();
+
+        var obj = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    // ---------------------------------------------------------
     // POST /
-    // ---------------------------
+    // ---------------------------------------------------------
+
     [Fact]
     public async Task CreateProduct_ReturnsCreatedProduct()
     {
@@ -107,9 +123,26 @@ public class ProductsControllerTests
         Assert.Equal("p1", productDto.Id);
     }
 
-    // ---------------------------
+    [Fact]
+    public async Task CreateProduct_ServiceThrows_Returns500()
+    {
+        SetUser("user123");
+
+        var dto = new ProductCreateDto { Name = "X" };
+
+        _mockService.Setup(s => s.CreateProductForUser("user123", dto))
+                    .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.CreateProduct(dto);
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    // ---------------------------------------------------------
     // PUT /{id}
-    // ---------------------------
+    // ---------------------------------------------------------
+
     [Fact]
     public async Task UpdateProduct_ProductExists_ReturnsOk()
     {
@@ -150,9 +183,26 @@ public class ProductsControllerTests
         Assert.Equal("Product not found or not yours", result.Value);
     }
 
-    // ---------------------------
+    [Fact]
+    public async Task UpdateProduct_ServiceThrows_Returns500()
+    {
+        SetUser("user123");
+
+        var dto = new ProductUpdateDto { Name = "Updated" };
+
+        _mockService.Setup(s => s.UpdateProduct("user123", "p1", dto))
+                    .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.UpdateProduct("p1", dto);
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    // ---------------------------------------------------------
     // DELETE /{id}
-    // ---------------------------
+    // ---------------------------------------------------------
+
     [Fact]
     public async Task DeleteProduct_Success_ReturnsOk()
     {
@@ -165,7 +215,6 @@ public class ProductsControllerTests
 
         Assert.NotNull(result);
 
-        // Convert anonymous object to dictionary
         var dict = result.Value.GetType()
             .GetProperties()
             .ToDictionary(p => p.Name, p => p.GetValue(result.Value));
@@ -187,9 +236,24 @@ public class ProductsControllerTests
         Assert.Equal("Product not found or not yours", result.Value);
     }
 
-    // ---------------------------
+    [Fact]
+    public async Task DeleteProduct_ServiceThrows_Returns500()
+    {
+        SetUser("user123");
+
+        _mockService.Setup(s => s.DeleteProduct("user123", "p1"))
+                    .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.DeleteProduct("p1");
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    // ---------------------------------------------------------
     // GET /
-    // ---------------------------
+    // ---------------------------------------------------------
+
     [Fact]
     public async Task GetAll_ReturnsAllProducts()
     {
@@ -207,5 +271,17 @@ public class ProductsControllerTests
         Assert.NotNull(result);
         var dto = Assert.IsAssignableFrom<IEnumerable<ProductReadDto>>(result.Value);
         Assert.Equal(2, dto.Count());
+    }
+
+    [Fact]
+    public async Task GetAll_RepositoryThrows_Returns500()
+    {
+        _mockRepo.Setup(r => r.GetAllAsync())
+                 .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.GetAll();
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
     }
 }

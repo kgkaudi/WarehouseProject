@@ -19,32 +19,54 @@ namespace backend.Controllers
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
-            var users = await _users.GetAllAsync();
-            return Ok(users);
+            try
+            {
+                var users = await _users.GetAllAsync();
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPut("promote/{id}")]
         public async Task<IActionResult> PromoteToAdmin(string id)
         {
-            var user = await _users.GetByIdAsync(id);
-            if (user == null)
-                return NotFound("User not found");
+            try
+            {
+                var user = await _users.GetByIdAsync(id);
+                if (user == null)
+                    return NotFound("User not found");
 
-            user.Role = "admin";
-            await _users.UpdateAsync(user);
+                user.Role = "admin";
+                await _users.UpdateAsync(user);
 
-            return Ok("User promoted to admin");
+                return Ok("User promoted to admin");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
-            var user = await _users.GetByIdAsync(id);
-            if (user == null)
-                return NotFound("User not found");
+            try
+            {
+                var user = await _users.GetByIdAsync(id);
+                if (user == null)
+                    return NotFound("User not found");
 
-            await _users.DeleteAsync(id);
-            return Ok("User deleted");
+                await _users.DeleteAsync(id);
+                return Ok("User deleted");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
+
     }
 }

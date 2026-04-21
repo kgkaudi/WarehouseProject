@@ -8,6 +8,7 @@ using backend.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace backend.Tests;
 
@@ -25,9 +26,10 @@ public class UsersControllerTests
         _controller = new UsersController(_mockUsers.Object, _mockProducts.Object);
     }
 
-    // ---------------------------
+    // ---------------------------------------------------------
     // GET /api/users
-    // ---------------------------
+    // ---------------------------------------------------------
+
     [Fact]
     public async Task GetUsers_ReturnsUsersWithProducts()
     {
@@ -60,9 +62,40 @@ public class UsersControllerTests
         Assert.Equal(2, dto.Count());
     }
 
-    // ---------------------------
+    [Fact]
+    public async Task GetUsers_UsersRepositoryThrows_Returns500()
+    {
+        _mockUsers.Setup(r => r.GetAllAsync())
+                  .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.GetUsers();
+
+        var obj = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetUsers_ProductRepositoryThrowsInsideLoop_Returns500()
+    {
+        var users = new List<User>
+        {
+            new User { Id = "1", Username = "A" }
+        };
+
+        _mockUsers.Setup(r => r.GetAllAsync()).ReturnsAsync(users);
+        _mockProducts.Setup(r => r.GetByUserIdAsync("1"))
+                     .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.GetUsers();
+
+        var obj = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    // ---------------------------------------------------------
     // PUT /{id}
-    // ---------------------------
+    // ---------------------------------------------------------
+
     [Fact]
     public async Task UpdateUser_UserExists_ReturnsOk()
     {
@@ -97,9 +130,41 @@ public class UsersControllerTests
         Assert.Equal("User not found", result.Value);
     }
 
-    // ---------------------------
+    [Fact]
+    public async Task UpdateUser_GetByIdThrows_Returns500()
+    {
+        _mockUsers.Setup(r => r.GetByIdAsync("1"))
+                  .ThrowsAsync(new Exception("DB error"));
+
+        var dto = new UserUpdateDto();
+
+        var result = await _controller.UpdateUser("1", dto);
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateUser_UpdateThrows_Returns500()
+    {
+        var user = new User { Id = "1" };
+
+        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
+        _mockUsers.Setup(r => r.UpdateAsync(user))
+                  .ThrowsAsync(new Exception("DB error"));
+
+        var dto = new UserUpdateDto();
+
+        var result = await _controller.UpdateUser("1", dto);
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    // ---------------------------------------------------------
     // DELETE /{id}
-    // ---------------------------
+    // ---------------------------------------------------------
+
     [Fact]
     public async Task DeleteUser_UserExists_DeletesUserAndProducts()
     {
@@ -127,9 +192,54 @@ public class UsersControllerTests
         Assert.Equal("User not found", result.Value);
     }
 
-    // ---------------------------
+    [Fact]
+    public async Task DeleteUser_GetByIdThrows_Returns500()
+    {
+        _mockUsers.Setup(r => r.GetByIdAsync("1"))
+                  .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.DeleteUser("1");
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteUser_DeleteProductsThrows_Returns500()
+    {
+        var user = new User { Id = "1" };
+
+        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
+        _mockProducts.Setup(r => r.DeleteByUserIdAsync("1"))
+                     .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.DeleteUser("1");
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteUser_DeleteUserThrows_Returns500()
+    {
+        var user = new User { Id = "1" };
+
+        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
+        _mockProducts.Setup(r => r.DeleteByUserIdAsync("1"))
+                     .Returns(Task.CompletedTask);
+        _mockUsers.Setup(r => r.DeleteAsync("1"))
+                  .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.DeleteUser("1");
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    // ---------------------------------------------------------
     // POST promote/{id}
-    // ---------------------------
+    // ---------------------------------------------------------
+
     [Fact]
     public async Task PromoteToAdmin_UserExists_ReturnsOk()
     {
@@ -155,9 +265,37 @@ public class UsersControllerTests
         Assert.Equal("User not found", result.Value);
     }
 
-    // ---------------------------
+    [Fact]
+    public async Task PromoteToAdmin_GetByIdThrows_Returns500()
+    {
+        _mockUsers.Setup(r => r.GetByIdAsync("1"))
+                  .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.PromoteToAdmin("1");
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    [Fact]
+    public async Task PromoteToAdmin_UpdateThrows_Returns500()
+    {
+        var user = new User { Id = "1", Role = "user" };
+
+        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
+        _mockUsers.Setup(r => r.UpdateAsync(user))
+                  .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.PromoteToAdmin("1");
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    // ---------------------------------------------------------
     // POST demote/{id}
-    // ---------------------------
+    // ---------------------------------------------------------
+
     [Fact]
     public async Task DemoteToUser_UserExists_ReturnsOk()
     {
@@ -181,5 +319,32 @@ public class UsersControllerTests
 
         Assert.NotNull(result);
         Assert.Equal("User not found", result.Value);
+    }
+
+    [Fact]
+    public async Task DemoteToUser_GetByIdThrows_Returns500()
+    {
+        _mockUsers.Setup(r => r.GetByIdAsync("1"))
+                  .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.DemoteToUser("1");
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    [Fact]
+    public async Task DemoteToUser_UpdateThrows_Returns500()
+    {
+        var user = new User { Id = "1", Role = "admin" };
+
+        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
+        _mockUsers.Setup(r => r.UpdateAsync(user))
+                  .ThrowsAsync(new Exception("DB error"));
+
+        var result = await _controller.DemoteToUser("1");
+
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
     }
 }

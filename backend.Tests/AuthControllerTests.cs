@@ -1,4 +1,3 @@
-// backend.Tests/AuthControllerTests.cs
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
@@ -30,9 +29,10 @@ namespace backend.Tests
             _controller = new AuthController(_mockUsers.Object, _mockConfig.Object);
         }
 
-        // ---------------------------
+        // ---------------------------------------------------------
         // REGISTER
-        // ---------------------------
+        // ---------------------------------------------------------
+
         [Fact]
         public async Task Register_UsernameExists_ReturnsBadRequest()
         {
@@ -70,9 +70,29 @@ namespace backend.Tests
             Assert.Equal("Email already exists", result.Value);
         }
 
-        // ---------------------------
+        [Fact]
+        public async Task Register_RepositoryThrows_Returns500()
+        {
+            _mockUsers.Setup(r => r.UsernameExistsAsync("x"))
+                      .ThrowsAsync(new Exception("DB error"));
+
+            var dto = new UserRegisterDto
+            {
+                Username = "x",
+                Email = "x@test.com",
+                Password = "123"
+            };
+
+            var result = await _controller.Register(dto);
+
+            var obj = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, obj.StatusCode);
+        }
+
+        // ---------------------------------------------------------
         // VERIFY EMAIL
-        // ---------------------------
+        // ---------------------------------------------------------
+
         [Fact]
         public async Task VerifyEmail_ValidToken_ReturnsOk()
         {
@@ -106,9 +126,22 @@ namespace backend.Tests
             Assert.Equal("Invalid or expired token", result.Value);
         }
 
-        // ---------------------------
+        [Fact]
+        public async Task VerifyEmail_RepositoryThrows_Returns500()
+        {
+            _mockUsers.Setup(r => r.GetByEmailVerificationTokenAsync("abc"))
+                      .ThrowsAsync(new Exception("DB error"));
+
+            var result = await _controller.VerifyEmail("abc");
+
+            var obj = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, obj.StatusCode);
+        }
+
+        // ---------------------------------------------------------
         // LOGIN
-        // ---------------------------
+        // ---------------------------------------------------------
+
         [Fact]
         public async Task Login_UserNotFound_ReturnsUnauthorized()
         {
@@ -123,9 +156,24 @@ namespace backend.Tests
             Assert.Equal("Invalid username or password", result.Value);
         }
 
-        // ---------------------------
+        [Fact]
+        public async Task Login_RepositoryThrows_Returns500()
+        {
+            _mockUsers.Setup(r => r.GetByUsernameAsync("x"))
+                      .ThrowsAsync(new Exception("DB error"));
+
+            var dto = new UserLoginDto { Username = "x", Password = "123" };
+
+            var result = await _controller.Login(dto);
+
+            var obj = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, obj.StatusCode);
+        }
+
+        // ---------------------------------------------------------
         // REQUEST PASSWORD RESET
-        // ---------------------------
+        // ---------------------------------------------------------
+
         [Fact]
         public async Task RequestPasswordReset_EmailNotFound_ReturnsOkGeneric()
         {
@@ -140,9 +188,24 @@ namespace backend.Tests
             Assert.Equal("If the email exists, a reset token will be returned.", result.Value);
         }
 
-        // ---------------------------
+        [Fact]
+        public async Task RequestPasswordReset_RepositoryThrows_Returns500()
+        {
+            _mockUsers.Setup(r => r.GetByEmailAsync("x@test.com"))
+                      .ThrowsAsync(new Exception("DB error"));
+
+            var dto = new PasswordResetRequestDto { Email = "x@test.com" };
+
+            var result = await _controller.RequestPasswordReset(dto);
+
+            var obj = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, obj.StatusCode);
+        }
+
+        // ---------------------------------------------------------
         // RESET PASSWORD
-        // ---------------------------
+        // ---------------------------------------------------------
+
         [Fact]
         public async Task ResetPassword_InvalidToken_ReturnsBadRequest()
         {
@@ -157,9 +220,24 @@ namespace backend.Tests
             Assert.Equal("Invalid or expired token", result.Value);
         }
 
-        // ---------------------------
+        [Fact]
+        public async Task ResetPassword_RepositoryThrows_Returns500()
+        {
+            _mockUsers.Setup(r => r.GetByPasswordResetTokenAsync("x"))
+                      .ThrowsAsync(new Exception("DB error"));
+
+            var dto = new PasswordResetDto { Token = "x", NewPassword = "newpass" };
+
+            var result = await _controller.ResetPassword(dto);
+
+            var obj = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, obj.StatusCode);
+        }
+
+        // ---------------------------------------------------------
         // CHANGE PASSWORD
-        // ---------------------------
+        // ---------------------------------------------------------
+
         [Fact]
         public async Task ChangePassword_WrongCurrentPassword_ReturnsUnauthorized()
         {
@@ -195,9 +273,39 @@ namespace backend.Tests
             Assert.Equal("Current password incorrect", result.Value);
         }
 
-        // ---------------------------
+        [Fact]
+        public async Task ChangePassword_RepositoryThrows_Returns500()
+        {
+            _mockUsers.Setup(r => r.GetByIdAsync("1"))
+                      .ThrowsAsync(new Exception("DB error"));
+
+            var dto = new ChangePasswordDto
+            {
+                CurrentPassword = "x",
+                NewPassword = "y"
+            };
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                    {
+                        new Claim("UserId", "1")
+                    }))
+                }
+            };
+
+            var result = await _controller.ChangePassword(dto);
+
+            var obj = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, obj.StatusCode);
+        }
+
+        // ---------------------------------------------------------
         // DELETE ACCOUNT
-        // ---------------------------
+        // ---------------------------------------------------------
+
         [Fact]
         public async Task DeleteAccount_ReturnsOk()
         {
@@ -217,6 +325,29 @@ namespace backend.Tests
             Assert.NotNull(result);
             Assert.Equal("Account deleted", result.Value);
             _mockUsers.Verify(r => r.DeleteAsync("1"), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteAccount_RepositoryThrows_Returns500()
+        {
+            _mockUsers.Setup(r => r.DeleteAsync("1"))
+                      .ThrowsAsync(new Exception("DB error"));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                    {
+                        new Claim("UserId", "1")
+                    }))
+                }
+            };
+
+            var result = await _controller.DeleteAccount();
+
+            var obj = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, obj.StatusCode);
         }
     }
 }
