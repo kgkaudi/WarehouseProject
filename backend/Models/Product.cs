@@ -7,7 +7,7 @@ namespace backend.Models;
 public class Product
 {
     [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
+    [BsonRepresentation(BsonType.String)]
     public string Id { get; set; } = null!;
 
     public string UserId { get; set; } = null!;

@@ -6,7 +6,7 @@ namespace backend.Models;
 public class User
 {
     [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
+    [BsonRepresentation(BsonType.String)]
     public string Id { get; set; } = null!;
 
     public string Username { get; set; } = null!;
@@ -25,6 +25,6 @@ public class User
 
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetTokenExpires { get; set; }
-    
+
     public string Role { get; set; } = "user";
 }
