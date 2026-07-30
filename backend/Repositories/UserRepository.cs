@@ -22,7 +22,7 @@ namespace backend.Repositories
         public async Task<User?> GetByIdAsync(string id)
         {
             var user = await _users.Find(u => u.Id == id).FirstOrDefaultAsync();
-            return user; // may be null → matches interface
+            return user;
         }
 
         public async Task<User?> GetByUsernameAsync(string username)
@@ -69,7 +69,10 @@ namespace backend.Repositories
         public Task UpdateAsync(User user) =>
             _users.ReplaceOneAsync(u => u.Id == user.Id, user);
 
-        public Task DeleteAsync(string id) =>
-            _users.DeleteOneAsync(u => u.Id == id);
+        public async Task<bool> DeleteAsync(string id)
+        {
+            var result = await _users.DeleteOneAsync(u => u.Id == id);
+            return result.DeletedCount > 0;
+        }
     }
 }

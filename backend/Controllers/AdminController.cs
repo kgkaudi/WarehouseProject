@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using backend.Repositories;
+using backend.Models;
 
 namespace backend.Controllers
 {
@@ -16,6 +17,9 @@ namespace backend.Controllers
             _users = users;
         }
 
+        // ---------------------------------------------------------
+        // GET /api/admin/users
+        // ---------------------------------------------------------
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -26,6 +30,9 @@ namespace backend.Controllers
                 if (users == null)
                     return StatusCode(500, "Repository returned null");
 
+                if (users.Any(u => u == null))
+                    return StatusCode(500, "Repository returned invalid user entries");
+
                 return Ok(users);
             }
             catch (Exception ex)
@@ -34,6 +41,9 @@ namespace backend.Controllers
             }
         }
 
+        // ---------------------------------------------------------
+        // PUT /api/admin/promote/{id}
+        // ---------------------------------------------------------
         [HttpPut("promote/{id}")]
         public async Task<IActionResult> PromoteToAdmin(string id)
         {
@@ -43,8 +53,15 @@ namespace backend.Controllers
                     return BadRequest("Invalid user id");
 
                 var user = await _users.GetByIdAsync(id);
+
                 if (user == null)
                     return NotFound("User not found");
+
+                if (string.IsNullOrWhiteSpace(user.Id))
+                    return StatusCode(500, "Repository returned invalid user");
+
+                if (string.Equals(user.Role, "admin", StringComparison.OrdinalIgnoreCase))
+                    return Ok("User is already admin");
 
                 user.Role = "admin";
 
@@ -58,6 +75,9 @@ namespace backend.Controllers
             }
         }
 
+        // ---------------------------------------------------------
+        // DELETE /api/admin/delete/{id}
+        // ---------------------------------------------------------
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
@@ -70,7 +90,13 @@ namespace backend.Controllers
                 if (user == null)
                     return NotFound("User not found");
 
-                await _users.DeleteAsync(id);
+                if (string.IsNullOrWhiteSpace(user.Id))
+                    return StatusCode(500, "Repository returned invalid user");
+
+                var deleted = await _users.DeleteAsync(id);
+
+                if (!deleted)
+                    return StatusCode(500, "Delete failed");
 
                 return Ok("User deleted");
             }
@@ -79,6 +105,5 @@ namespace backend.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
     }
 }

@@ -275,7 +275,7 @@ public class UsersControllerTests
 
         _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
         _mockProducts.Setup(r => r.DeleteByUserIdAsync("1")).Returns(Task.CompletedTask);
-        _mockUsers.Setup(r => r.DeleteAsync("1")).Returns(Task.CompletedTask);
+        _mockUsers.Setup(r => r.DeleteAsync("1")).ReturnsAsync(true);
 
         var result = await _controller.DeleteUser("1") as OkObjectResult;
 
