@@ -45,7 +45,8 @@ namespace backend.Seed
             // -----------------------------
             // 2. Seed Test Product
             // -----------------------------
-            var existingProduct = (await _products.GetByUserIdAsync(admin.Id)).FirstOrDefault();
+            var products = await _products.GetByUserIdAsync(admin.Id);
+            var existingProduct = products?.FirstOrDefault();
 
             if (existingProduct == null)
             {

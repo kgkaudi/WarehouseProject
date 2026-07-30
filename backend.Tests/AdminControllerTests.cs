@@ -43,6 +43,28 @@ namespace backend.Tests
         }
 
         [Fact]
+        public async Task GetAllUsers_EmptyList_ReturnsOkWithEmptyList()
+        {
+            _mockUsers.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<User>());
+
+            var result = await _controller.GetAllUsers() as OkObjectResult;
+
+            Assert.NotNull(result);
+            var returned = Assert.IsAssignableFrom<IEnumerable<User>>(result.Value);
+            Assert.Empty(returned);
+        }
+
+        [Fact]
+        public async Task GetAllUsers_RepositoryReturnsNull_Returns500()
+        {
+            _mockUsers.Setup(r => r.GetAllAsync()).ReturnsAsync((List<User>?)null);
+
+            var result = await _controller.GetAllUsers();
+            var obj = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, obj.StatusCode);
+        }
+
+        [Fact]
         public async Task GetAllUsers_RepositoryThrows_Returns500()
         {
             _mockUsers.Setup(r => r.GetAllAsync())
@@ -73,6 +95,19 @@ namespace backend.Tests
         }
 
         [Fact]
+        public async Task PromoteToAdmin_UserAlreadyAdmin_ReturnsOk()
+        {
+            var user = new User { Id = "1", Role = "admin" };
+            _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
+
+            var result = await _controller.PromoteToAdmin("1") as OkObjectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("User promoted to admin", result.Value);
+            Assert.Equal("admin", user.Role);
+        }
+
+        [Fact]
         public async Task PromoteToAdmin_UserNotFound_ReturnsNotFound()
         {
             _mockUsers.Setup(r => r.GetByIdAsync("missing")).ReturnsAsync((User?)null);
@@ -84,15 +119,12 @@ namespace backend.Tests
         }
 
         [Fact]
-        public async Task PromoteToAdmin_InvalidId_ReturnsNotFound()
+        public async Task PromoteToAdmin_EmptyId_ReturnsBadRequest()
         {
-            _mockUsers.Setup(r => r.GetByIdAsync(""))
-                      .ReturnsAsync((User?)null);
-
-            var result = await _controller.PromoteToAdmin("") as NotFoundObjectResult;
+            var result = await _controller.PromoteToAdmin("") as BadRequestObjectResult;
 
             Assert.NotNull(result);
-            Assert.Equal("User not found", result.Value);
+            Assert.Equal("Invalid user id", result.Value);
         }
 
         [Fact]
@@ -151,15 +183,12 @@ namespace backend.Tests
         }
 
         [Fact]
-        public async Task DeleteUser_InvalidId_ReturnsNotFound()
+        public async Task DeleteUser_EmptyId_ReturnsBadRequest()
         {
-            _mockUsers.Setup(r => r.GetByIdAsync(""))
-                      .ReturnsAsync((User?)null);
-
-            var result = await _controller.DeleteUser("") as NotFoundObjectResult;
+            var result = await _controller.DeleteUser("") as BadRequestObjectResult;
 
             Assert.NotNull(result);
-            Assert.Equal("User not found", result.Value);
+            Assert.Equal("Invalid user id", result.Value);
         }
 
         [Fact]

@@ -78,7 +78,7 @@
           "build/_._": {}
         }
       },
-      "Microsoft.CodeCoverage/18.3.0": {
+      "Microsoft.CodeCoverage/18.6.0": {
         "type": "package",
         "compile": {
           "lib/net8.0/Microsoft.VisualStudio.CodeCoverage.Shim.dll": {}
@@ -207,11 +207,11 @@
           }
         }
       },
-      "Microsoft.NET.Test.Sdk/18.3.0": {
+      "Microsoft.NET.Test.Sdk/18.6.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.CodeCoverage": "18.3.0",
-          "Microsoft.TestPlatform.TestHost": "18.3.0"
+          "Microsoft.CodeCoverage": "18.6.0",
+          "Microsoft.TestPlatform.TestHost": "18.6.0"
         },
         "compile": {
           "lib/net8.0/_._": {}
@@ -237,7 +237,7 @@
           }
         }
       },
-      "Microsoft.TestPlatform.ObjectModel/18.3.0": {
+      "Microsoft.TestPlatform.ObjectModel/18.6.0": {
         "type": "package",
         "compile": {
           "lib/net8.0/Microsoft.TestPlatform.CoreUtilities.dll": {},
@@ -330,10 +330,10 @@
           }
         }
       },
-      "Microsoft.TestPlatform.TestHost/18.3.0": {
+      "Microsoft.TestPlatform.TestHost/18.6.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.TestPlatform.ObjectModel": "18.3.0",
+          "Microsoft.TestPlatform.ObjectModel": "18.6.0",
           "Newtonsoft.Json": "13.0.3"
         },
         "compile": {
@@ -785,11 +785,8 @@
         "dependencies": {
           "Microsoft.AspNetCore.Authentication.JwtBearer": "10.0.5",
           "Microsoft.AspNetCore.OpenApi": "10.0.4",
-          "Microsoft.NET.Test.Sdk": "18.3.0",
           "MongoDB.Driver": "3.7.1",
-          "Moq": "4.20.72",
-          "Swashbuckle.AspNetCore": "10.1.5",
-          "xunit": "2.9.3"
+          "Swashbuckle.AspNetCore": "10.1.5"
         },
         "compile": {
           "bin/placeholder/backend.dll": {}
@@ -956,15 +953,16 @@
         "microsoft.aspnetcore.openapi.nuspec"
       ]
     },
-    "Microsoft.CodeCoverage/18.3.0": {
-      "sha512": "23BNy/vziREC20Wwhb50K7+kZe0m07KlLWDQv4qjJ9tt3QjpDpDIqJFrhYHmMEo9xDkuSp55U/8h4bMF7MiB+g==",
+    "Microsoft.CodeCoverage/18.6.0": {
+      "sha512": "bkmCXn/65Cd0LdO2zTb/ValGAJ1H8y/CgYOiBb3jsDyHI3Y1ljKx6RBvhvn3e5D/4R4I00RRwLf+Bd2Sn6bJjA==",
       "type": "package",
-      "path": "microsoft.codecoverage/18.3.0",
+      "path": "microsoft.codecoverage/18.6.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
         "PACKAGE.md",
+        "README.md",
         "ThirdPartyNotices.txt",
         "build/netstandard2.0/CodeCoverage/CodeCoverage.config",
         "build/netstandard2.0/CodeCoverage/CodeCoverage.exe",
@@ -1034,7 +1032,7 @@
         "build/netstandard2.0/zh-Hant/Microsoft.VisualStudio.TraceDataCollector.resources.dll",
         "lib/net462/Microsoft.VisualStudio.CodeCoverage.Shim.dll",
         "lib/net8.0/Microsoft.VisualStudio.CodeCoverage.Shim.dll",
-        "microsoft.codecoverage.18.3.0.nupkg.sha512",
+        "microsoft.codecoverage.18.6.0.nupkg.sha512",
         "microsoft.codecoverage.nuspec"
       ]
     },
@@ -1449,14 +1447,15 @@
         "microsoft.identitymodel.tokens.nuspec"
       ]
     },
-    "Microsoft.NET.Test.Sdk/18.3.0": {
-      "sha512": "xW3kXuWRQtgoxJp4J+gdhHSQyK+6Wb/AZDSd7lMvuMRYlZ1tnpkojyfZlWilB5G4dmZ0Y0ZxU/M23TlubndNkw==",
+    "Microsoft.NET.Test.Sdk/18.6.0": {
+      "sha512": "kAIBt0MsYR0o2RULmlW5BhQ1ha50aGEgLKG4f1p0kePBGLJCprqs3S+NxRrYN8UH7mSQRPKpeiH9mwPMEKUObQ==",
       "type": "package",
-      "path": "microsoft.net.test.sdk/18.3.0",
+      "path": "microsoft.net.test.sdk/18.6.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
+        "README.md",
         "build/net462/Microsoft.NET.Test.Sdk.props",
         "build/net462/Microsoft.NET.Test.Sdk.targets",
         "build/net8.0/Microsoft.NET.Test.Sdk.Program.cs",
@@ -1477,7 +1476,7 @@
         "lib/native/_._",
         "lib/net462/_._",
         "lib/net8.0/_._",
-        "microsoft.net.test.sdk.18.3.0.nupkg.sha512",
+        "microsoft.net.test.sdk.18.6.0.nupkg.sha512",
         "microsoft.net.test.sdk.nuspec"
       ]
     },
@@ -1499,14 +1498,15 @@
         "microsoft.openapi.nuspec"
       ]
     },
-    "Microsoft.TestPlatform.ObjectModel/18.3.0": {
-      "sha512": "AEIEX2aWdPO9XbtR96eBaJxmXRD9vaI9uQ1T/JbPEKlTAZwYx0ZrMzKyULMdh/HH9Sg03kXCoN7LszQ90o6nPQ==",
+    "Microsoft.TestPlatform.ObjectModel/18.6.0": {
+      "sha512": "gQTW4BIfM2ZLxixo9ITXoulLKjn20FiiHtqTsx9PENqTrX7368ZeJ5L0QZJyReXDWORPRV8jXwZR6Aar8JOyaA==",
       "type": "package",
-      "path": "microsoft.testplatform.objectmodel/18.3.0",
+      "path": "microsoft.testplatform.objectmodel/18.6.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
+        "README.md",
         "lib/net462/Microsoft.TestPlatform.CoreUtilities.dll",
         "lib/net462/Microsoft.TestPlatform.PlatformAbstractions.dll",
         "lib/net462/Microsoft.VisualStudio.TestPlatform.ObjectModel.dll",
@@ -1594,18 +1594,19 @@
         "lib/netstandard2.0/zh-Hans/Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll",
         "lib/netstandard2.0/zh-Hant/Microsoft.TestPlatform.CoreUtilities.resources.dll",
         "lib/netstandard2.0/zh-Hant/Microsoft.VisualStudio.TestPlatform.ObjectModel.resources.dll",
-        "microsoft.testplatform.objectmodel.18.3.0.nupkg.sha512",
+        "microsoft.testplatform.objectmodel.18.6.0.nupkg.sha512",
         "microsoft.testplatform.objectmodel.nuspec"
       ]
     },
-    "Microsoft.TestPlatform.TestHost/18.3.0": {
-      "sha512": "twmsoelXnp1uWMU3VGip9f0Jr1mZ0PZqgJdF35CIrdYgYrkHIJMV1m8uKyhcdjLdsQDESHAgkR7KhS9i1qpJag==",
+    "Microsoft.TestPlatform.TestHost/18.6.0": {
+      "sha512": "em1eLz5Q46+hsCtAXdXggWAPd9gQyT4ngdsQ7k1eWvQgpsjtS/wAOJ/5TteieFdiAvrEq1iVn00LtusAxRaVmQ==",
       "type": "package",
-      "path": "microsoft.testplatform.testhost/18.3.0",
+      "path": "microsoft.testplatform.testhost/18.6.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
+        "README.md",
         "ThirdPartyNotices.txt",
         "build/net8.0/Microsoft.TestPlatform.TestHost.props",
         "build/net8.0/Microsoft.TestPlatform.TestHost.targets",
@@ -1664,7 +1665,7 @@
         "lib/net8.0/zh-Hant/Microsoft.TestPlatform.CommunicationUtilities.resources.dll",
         "lib/net8.0/zh-Hant/Microsoft.TestPlatform.CrossPlatEngine.resources.dll",
         "lib/net8.0/zh-Hant/Microsoft.VisualStudio.TestPlatform.Common.resources.dll",
-        "microsoft.testplatform.testhost.18.3.0.nupkg.sha512",
+        "microsoft.testplatform.testhost.18.6.0.nupkg.sha512",
         "microsoft.testplatform.testhost.nuspec"
       ]
     },
@@ -2086,7 +2087,8 @@
   },
   "projectFileDependencyGroups": {
     "net10.0": [
-      "Microsoft.NET.Test.Sdk >= 18.3.0",
+      "Castle.Core >= 5.1.1",
+      "Microsoft.NET.Test.Sdk >= 18.6.0",
       "Moq >= 4.20.72",
       "backend >= 1.0.0",
       "coverlet.collector >= 6.0.4",
@@ -2127,8 +2129,9 @@
         }
       },
       "warningProperties": {
-        "warnAsError": [
-          "NU1605"
+        "noWarn": [
+          "NU1902",
+          "NU1903"
         ]
       },
       "restoreAuditProperties": {
@@ -2142,9 +2145,13 @@
       "net10.0": {
         "targetAlias": "net10.0",
         "dependencies": {
+          "Castle.Core": {
+            "target": "Package",
+            "version": "[5.1.1, )"
+          },
           "Microsoft.NET.Test.Sdk": {
             "target": "Package",
-            "version": "[18.3.0, )"
+            "version": "[18.6.0, )"
           },
           "Moq": {
             "target": "Package",
@@ -2181,7 +2188,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/10.0.106/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/10.0.110/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

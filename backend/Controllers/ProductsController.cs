@@ -28,9 +28,13 @@ namespace backend.Controllers
         {
             try
             {
-                var userId = User.FindFirst("UserId")!.Value;
+                var userId = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrWhiteSpace(userId))
+                    return Unauthorized("UserId claim missing");
 
                 var products = await _products.GetByUserIdAsync(userId);
+                if (products == null)
+                    return StatusCode(500, "Product repository returned null");
 
                 var dto = products.Select(p => new ProductReadDto
                 {
@@ -60,8 +64,16 @@ namespace backend.Controllers
         {
             try
             {
-                var userId = User.FindFirst("UserId")!.Value;
+                var userId = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrWhiteSpace(userId))
+                    return Unauthorized("UserId claim missing");
+
+                if (dto == null)
+                    return BadRequest("Invalid product data");
+
                 var product = await _service.CreateProductForUser(userId, dto);
+                if (product == null)
+                    return StatusCode(500, "Service returned null product");
 
                 return Ok(new ProductReadDto
                 {
@@ -89,7 +101,12 @@ namespace backend.Controllers
         {
             try
             {
-                var userId = User.FindFirst("UserId")!.Value;
+                var userId = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrWhiteSpace(userId))
+                    return Unauthorized("UserId claim missing");
+
+                if (dto == null)
+                    return BadRequest("Invalid product data");
 
                 var updated = await _service.UpdateProduct(userId, id, dto);
                 if (updated == null)
@@ -121,10 +138,16 @@ namespace backend.Controllers
         {
             try
             {
-                var userId = User.FindFirst("UserId")!.Value;
+                var userId = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrWhiteSpace(userId))
+                    return Unauthorized("UserId claim missing");
 
-                var success = await _service.DeleteProduct(userId, id);
-                if (!success)
+                bool? success = await _service.DeleteProduct(userId, id);
+
+                if (success == null)
+                    return StatusCode(500, "Service returned null");
+
+                if (!success.Value)
                     return NotFound("Product not found or not yours");
 
                 return Ok(new { message = "Product deleted" });
@@ -144,6 +167,8 @@ namespace backend.Controllers
             try
             {
                 var products = await _products.GetAllAsync();
+                if (products == null)
+                    return StatusCode(500, "Repository returned null");
 
                 var dto = products.Select(p => new ProductReadDto
                 {

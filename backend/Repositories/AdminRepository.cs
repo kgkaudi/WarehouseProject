@@ -13,11 +13,17 @@ namespace backend.Repositories
             _users = db.Users;
         }
 
-        public Task<List<User>> GetAllUsersAsync() =>
-            _users.Find(_ => true).ToListAsync();
+        public async Task<List<User>?> GetAllUsersAsync()
+        {
+            var list = await _users.Find(_ => true).ToListAsync();
+            return list; // list is never null, but nullable return type is allowed
+        }
 
-        public Task<User?> GetByIdAsync(string id) =>
-            _users.Find(u => u.Id == id).FirstOrDefaultAsync();
+        public async Task<User?> GetByIdAsync(string id)
+        {
+            var user = await _users.Find(u => u.Id == id).FirstOrDefaultAsync();
+            return user; // may be null → matches interface
+        }
 
         public Task UpdateAsync(User user) =>
             _users.ReplaceOneAsync(u => u.Id == user.Id, user);

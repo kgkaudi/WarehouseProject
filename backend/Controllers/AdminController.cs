@@ -22,6 +22,10 @@ namespace backend.Controllers
             try
             {
                 var users = await _users.GetAllAsync();
+
+                if (users == null)
+                    return StatusCode(500, "Repository returned null");
+
                 return Ok(users);
             }
             catch (Exception ex)
@@ -35,11 +39,15 @@ namespace backend.Controllers
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(id))
+                    return BadRequest("Invalid user id");
+
                 var user = await _users.GetByIdAsync(id);
                 if (user == null)
                     return NotFound("User not found");
 
                 user.Role = "admin";
+
                 await _users.UpdateAsync(user);
 
                 return Ok("User promoted to admin");
@@ -55,11 +63,15 @@ namespace backend.Controllers
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(id))
+                    return BadRequest("Invalid user id");
+
                 var user = await _users.GetByIdAsync(id);
                 if (user == null)
                     return NotFound("User not found");
 
                 await _users.DeleteAsync(id);
+
                 return Ok("User deleted");
             }
             catch (Exception ex)

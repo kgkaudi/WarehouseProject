@@ -89,6 +89,38 @@ namespace backend.Tests
             Assert.Equal(500, obj.StatusCode);
         }
 
+        [Fact]
+        public async Task Register_Success_ReturnsOk()
+        {
+            _mockUsers.Setup(r => r.UsernameExistsAsync("new")).ReturnsAsync(false);
+            _mockUsers.Setup(r => r.EmailExistsAsync("new@test.com")).ReturnsAsync(false);
+
+            var dto = new UserRegisterDto
+            {
+                Username = "new",
+                Email = "new@test.com",
+                Password = "123",
+                CompanyName = "TestCo",
+                CompanyAddress = "Address"
+            };
+
+            var result = await _controller.Register(dto) as OkObjectResult;
+
+            Assert.NotNull(result);
+            Assert.NotNull(result.Value);
+
+            var messageProp = result.Value.GetType().GetProperty("message");
+            var tokenProp = result.Value.GetType().GetProperty("verificationToken");
+
+            Assert.NotNull(messageProp);
+            Assert.NotNull(tokenProp);
+
+            Assert.Equal("User registered. Verify email using the token.", messageProp.GetValue(result.Value));
+            Assert.NotNull(tokenProp.GetValue(result.Value));
+
+            _mockUsers.Verify(r => r.CreateAsync(It.IsAny<User>()), Times.Once);
+        }
+
         // ---------------------------------------------------------
         // VERIFY EMAIL
         // ---------------------------------------------------------
@@ -127,6 +159,25 @@ namespace backend.Tests
         }
 
         [Fact]
+        public async Task VerifyEmail_ExpiredToken_ReturnsBadRequest()
+        {
+            var user = new User
+            {
+                Id = "1",
+                EmailVerificationToken = "abc",
+                EmailVerificationTokenExpires = DateTime.UtcNow.AddHours(-1)
+            };
+
+            _mockUsers.Setup(r => r.GetByEmailVerificationTokenAsync("abc"))
+                      .ReturnsAsync(user);
+
+            var result = await _controller.VerifyEmail("abc") as BadRequestObjectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("Invalid or expired token", result.Value);
+        }
+
+        [Fact]
         public async Task VerifyEmail_RepositoryThrows_Returns500()
         {
             _mockUsers.Setup(r => r.GetByEmailVerificationTokenAsync("abc"))
@@ -154,6 +205,60 @@ namespace backend.Tests
 
             Assert.NotNull(result);
             Assert.Equal("Invalid username or password", result.Value);
+        }
+
+        [Fact]
+        public async Task Login_WrongPassword_ReturnsUnauthorized()
+        {
+            var user = new User
+            {
+                Id = "1",
+                Username = "test",
+                PasswordHash = new byte[] { 1, 2, 3 },
+                PasswordSalt = new byte[] { 1, 2, 3 },
+                EmailConfirmed = true
+            };
+
+            _mockUsers.Setup(r => r.GetByUsernameAsync("test")).ReturnsAsync(user);
+
+            var dto = new UserLoginDto { Username = "test", Password = "wrong" };
+
+            var result = await _controller.Login(dto) as UnauthorizedObjectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("Invalid username or password", result.Value);
+        }
+
+        private (byte[] hash, byte[] salt) Hash(string password)
+        {
+            using var hmac = new System.Security.Cryptography.HMACSHA512();
+            var salt = hmac.Key;
+            var hash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+            return (hash, salt);
+        }
+
+        [Fact]
+        public async Task Login_EmailNotVerified_ReturnsUnauthorized()
+        {
+            var (hash, salt) = Hash("123");
+
+            var user = new User
+            {
+                Id = "1",
+                Username = "test",
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                EmailConfirmed = false
+            };
+
+            _mockUsers.Setup(r => r.GetByUsernameAsync("test")).ReturnsAsync(user);
+
+            var dto = new UserLoginDto { Username = "test", Password = "123" };
+
+            var result = await _controller.Login(dto) as UnauthorizedObjectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("Email not verified", result.Value);
         }
 
         [Fact]
@@ -221,6 +326,49 @@ namespace backend.Tests
         }
 
         [Fact]
+        public async Task ResetPassword_ExpiredToken_ReturnsBadRequest()
+        {
+            var user = new User
+            {
+                Id = "1",
+                PasswordResetToken = "abc",
+                PasswordResetTokenExpires = DateTime.UtcNow.AddHours(-1)
+            };
+
+            _mockUsers.Setup(r => r.GetByPasswordResetTokenAsync("abc"))
+                      .ReturnsAsync(user);
+
+            var dto = new PasswordResetDto { Token = "abc", NewPassword = "newpass" };
+
+            var result = await _controller.ResetPassword(dto) as BadRequestObjectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("Invalid or expired token", result.Value);
+        }
+
+        [Fact]
+        public async Task ResetPassword_Success_ReturnsOk()
+        {
+            var user = new User
+            {
+                Id = "1",
+                PasswordResetToken = "abc",
+                PasswordResetTokenExpires = DateTime.UtcNow.AddHours(1)
+            };
+
+            _mockUsers.Setup(r => r.GetByPasswordResetTokenAsync("abc"))
+                      .ReturnsAsync(user);
+
+            var dto = new PasswordResetDto { Token = "abc", NewPassword = "newpass" };
+
+            var result = await _controller.ResetPassword(dto) as OkObjectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("Password reset successful", result.Value);
+            _mockUsers.Verify(r => r.UpdateAsync(user), Times.Once);
+        }
+
+        [Fact]
         public async Task ResetPassword_RepositoryThrows_Returns500()
         {
             _mockUsers.Setup(r => r.GetByPasswordResetTokenAsync("x"))
@@ -237,6 +385,34 @@ namespace backend.Tests
         // ---------------------------------------------------------
         // CHANGE PASSWORD
         // ---------------------------------------------------------
+
+        [Fact]
+        public async Task ChangePassword_UserNotFound_ReturnsUnauthorized()
+        {
+            _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync((User?)null);
+
+            var dto = new ChangePasswordDto
+            {
+                CurrentPassword = "123",
+                NewPassword = "newpass"
+            };
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                    {
+                        new Claim("UserId", "1")
+                    }))
+                }
+            };
+
+            var result = await _controller.ChangePassword(dto) as UnauthorizedObjectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("User not found", result.Value);
+        }
 
         [Fact]
         public async Task ChangePassword_WrongCurrentPassword_ReturnsUnauthorized()
@@ -271,6 +447,44 @@ namespace backend.Tests
 
             Assert.NotNull(result);
             Assert.Equal("Current password incorrect", result.Value);
+        }
+
+        [Fact]
+        public async Task ChangePassword_Success_ReturnsOk()
+        {
+            var (hash, salt) = Hash("123");
+
+            var user = new User
+            {
+                Id = "1",
+                PasswordHash = hash,
+                PasswordSalt = salt
+            };
+
+            _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
+
+            var dto = new ChangePasswordDto
+            {
+                CurrentPassword = "123",
+                NewPassword = "newpass"
+            };
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                    {
+                        new Claim("UserId", "1")
+                    }))
+                }
+            };
+
+            var result = await _controller.ChangePassword(dto) as OkObjectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("Password changed", result.Value);
+            _mockUsers.Verify(r => r.UpdateAsync(user), Times.Once);
         }
 
         [Fact]

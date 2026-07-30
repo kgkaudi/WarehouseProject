@@ -43,6 +43,14 @@ public class ProductsControllerTests
         };
     }
 
+    private void ClearUser()
+    {
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+    }
+
     // ---------------------------------------------------------
     // GET /mine
     // ---------------------------------------------------------
@@ -67,6 +75,44 @@ public class ProductsControllerTests
         Assert.NotNull(okResult);
         var dto = Assert.IsAssignableFrom<IEnumerable<ProductReadDto>>(okResult.Value);
         Assert.Equal(2, dto.Count());
+    }
+
+    [Fact]
+    public async Task GetMyProducts_EmptyList_ReturnsEmptyList()
+    {
+        SetUser("user123");
+
+        _mockRepo.Setup(r => r.GetByUserIdAsync("user123"))
+                 .ReturnsAsync(new List<Product>());
+
+        var result = await _controller.GetMyProducts();
+        var ok = Assert.IsType<OkObjectResult>(result.Result);
+
+        var dto = Assert.IsAssignableFrom<IEnumerable<ProductReadDto>>(ok.Value);
+        Assert.Empty(dto);
+    }
+
+    [Fact]
+    public async Task GetMyProducts_RepositoryReturnsNull_Returns500()
+    {
+        SetUser("user123");
+
+        _mockRepo.Setup(r => r.GetByUserIdAsync("user123"))
+                 .ReturnsAsync((List<Product>)null);
+
+        var result = await _controller.GetMyProducts();
+        var obj = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetMyProducts_NoUserClaim_ReturnsUnauthorized()
+    {
+        ClearUser();
+
+        var result = await _controller.GetMyProducts();
+        var obj = Assert.IsType<UnauthorizedObjectResult>(result.Result);
+        Assert.Equal("UserId claim missing", obj.Value);
     }
 
     [Fact]
@@ -124,6 +170,43 @@ public class ProductsControllerTests
     }
 
     [Fact]
+    public async Task CreateProduct_NullDto_ReturnsBadRequest()
+    {
+        SetUser("user123");
+
+        var result = await _controller.CreateProduct(null);
+        var obj = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal("Invalid product data", obj.Value);
+    }
+
+    [Fact]
+    public async Task CreateProduct_NoUserClaim_ReturnsUnauthorized()
+    {
+        ClearUser();
+
+        var dto = new ProductCreateDto { Name = "X" };
+
+        var result = await _controller.CreateProduct(dto);
+        var obj = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal("UserId claim missing", obj.Value);
+    }
+
+    [Fact]
+    public async Task CreateProduct_ServiceReturnsNull_Returns500()
+    {
+        SetUser("user123");
+
+        var dto = new ProductCreateDto { Name = "X" };
+
+        _mockService.Setup(s => s.CreateProductForUser("user123", dto))
+                    .ReturnsAsync((Product)null);
+
+        var result = await _controller.CreateProduct(dto);
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
+    }
+
+    [Fact]
     public async Task CreateProduct_ServiceThrows_Returns500()
     {
         SetUser("user123");
@@ -165,6 +248,28 @@ public class ProductsControllerTests
         Assert.NotNull(result);
         var productDto = Assert.IsType<ProductReadDto>(result.Value);
         Assert.Equal("Updated", productDto.Name);
+    }
+
+    [Fact]
+    public async Task UpdateProduct_NullDto_ReturnsBadRequest()
+    {
+        SetUser("user123");
+
+        var result = await _controller.UpdateProduct("p1", null);
+        var obj = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal("Invalid product data", obj.Value);
+    }
+
+    [Fact]
+    public async Task UpdateProduct_NoUserClaim_ReturnsUnauthorized()
+    {
+        ClearUser();
+
+        var dto = new ProductUpdateDto { Name = "Updated" };
+
+        var result = await _controller.UpdateProduct("p1", dto);
+        var obj = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal("UserId claim missing", obj.Value);
     }
 
     [Fact]
@@ -215,11 +320,35 @@ public class ProductsControllerTests
 
         Assert.NotNull(result);
 
-        var dict = result.Value.GetType()
+        Assert.NotNull(result.Value);
+        var dict = result.Value!.GetType()
             .GetProperties()
             .ToDictionary(p => p.Name, p => p.GetValue(result.Value));
 
+
         Assert.Equal("Product deleted", dict["message"]);
+    }
+
+    [Fact]
+    public async Task DeleteProduct_NoUserClaim_ReturnsUnauthorized()
+    {
+        ClearUser();
+
+        var result = await _controller.DeleteProduct("p1");
+        var obj = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal("UserId claim missing", obj.Value);
+    }
+
+    [Fact]
+    public async Task DeleteProduct_ServiceReturnsNull_Returns500()
+    {
+        SetUser("user123");
+
+        _mockService.Setup(s => s.DeleteProduct("user123", "p1")).ReturnsAsync((bool?)null);
+
+        var result = await _controller.DeleteProduct("p1");
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
     }
 
     [Fact]
@@ -271,6 +400,30 @@ public class ProductsControllerTests
         Assert.NotNull(result);
         var dto = Assert.IsAssignableFrom<IEnumerable<ProductReadDto>>(result.Value);
         Assert.Equal(2, dto.Count());
+    }
+
+    [Fact]
+    public async Task GetAll_EmptyList_ReturnsEmptyList()
+    {
+        _mockRepo.Setup(r => r.GetAllAsync())
+                 .ReturnsAsync(new List<Product>());
+
+        var result = await _controller.GetAll() as OkObjectResult;
+
+        Assert.NotNull(result);
+        var dto = Assert.IsAssignableFrom<IEnumerable<ProductReadDto>>(result.Value);
+        Assert.Empty(dto);
+    }
+
+    [Fact]
+    public async Task GetAll_RepositoryReturnsNull_Returns500()
+    {
+        _mockRepo.Setup(r => r.GetAllAsync())
+                 .ReturnsAsync((List<Product>)null);
+
+        var result = await _controller.GetAll();
+        var obj = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, obj.StatusCode);
     }
 
     [Fact]

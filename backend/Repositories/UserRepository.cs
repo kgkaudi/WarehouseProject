@@ -13,17 +13,29 @@ namespace backend.Repositories
             _users = db.Users;
         }
 
-        public Task<List<User>> GetAllAsync() =>
-            _users.Find(_ => true).ToListAsync();
+        public async Task<List<User>?> GetAllAsync()
+        {
+            var list = await _users.Find(_ => true).ToListAsync();
+            return list; // never null, but nullable return type matches interface
+        }
 
-        public Task<User?> GetByIdAsync(string id) =>
-            _users.Find(u => u.Id == id).FirstOrDefaultAsync();
+        public async Task<User?> GetByIdAsync(string id)
+        {
+            var user = await _users.Find(u => u.Id == id).FirstOrDefaultAsync();
+            return user; // may be null → matches interface
+        }
 
-        public Task<User?> GetByUsernameAsync(string username) =>
-            _users.Find(u => u.Username == username).FirstOrDefaultAsync();
+        public async Task<User?> GetByUsernameAsync(string username)
+        {
+            var user = await _users.Find(u => u.Username == username).FirstOrDefaultAsync();
+            return user;
+        }
 
-        public Task<User?> GetByEmailAsync(string email) =>
-            _users.Find(u => u.Email == email).FirstOrDefaultAsync();
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            var user = await _users.Find(u => u.Email == email).FirstOrDefaultAsync();
+            return user;
+        }
 
         public Task<bool> UsernameExistsAsync(string username) =>
             _users.Find(u => u.Username == username).AnyAsync();
@@ -31,17 +43,25 @@ namespace backend.Repositories
         public Task<bool> EmailExistsAsync(string email) =>
             _users.Find(u => u.Email == email).AnyAsync();
 
-        public Task<User?> GetByEmailVerificationTokenAsync(string token) =>
-            _users.Find(u =>
+        public async Task<User?> GetByEmailVerificationTokenAsync(string token)
+        {
+            var user = await _users.Find(u =>
                 u.EmailVerificationToken == token &&
                 u.EmailVerificationTokenExpires > DateTime.UtcNow
             ).FirstOrDefaultAsync();
 
-        public Task<User?> GetByPasswordResetTokenAsync(string token) =>
-            _users.Find(u =>
+            return user;
+        }
+
+        public async Task<User?> GetByPasswordResetTokenAsync(string token)
+        {
+            var user = await _users.Find(u =>
                 u.PasswordResetToken == token &&
                 u.PasswordResetTokenExpires > DateTime.UtcNow
             ).FirstOrDefaultAsync();
+
+            return user;
+        }
 
         public Task CreateAsync(User user) =>
             _users.InsertOneAsync(user);

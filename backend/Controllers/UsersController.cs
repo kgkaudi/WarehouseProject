@@ -21,11 +21,30 @@ namespace backend.Controllers
             try
             {
                 var users = await _users.GetAllAsync();
+                if (users is null)
+                    return Ok(new List<UserReadDto>()); // no users → empty list
+
                 var result = new List<UserReadDto>();
 
                 foreach (var u in users)
                 {
                     var products = await _products.GetByUserIdAsync(u.Id);
+
+                    // TEST REQUIREMENT:
+                    // If repository returns NULL → return 500
+                    if (products is null)
+                        return StatusCode(500, $"Failed to load products for user {u.Id}");
+
+                    var safeProducts = products.Select(p => new ProductReadDto
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Description = p.Description,
+                        Dimensions = p.Dimensions,
+                        Price = p.Price,
+                        Quantity = p.Quantity,
+                        Weight = p.Weight
+                    }).ToList();
 
                     result.Add(new UserReadDto
                     {
@@ -34,16 +53,7 @@ namespace backend.Controllers
                         CompanyName = u.CompanyName,
                         CompanyAddress = u.CompanyAddress,
                         Role = u.Role,
-                        Products = products.Select(p => new ProductReadDto
-                        {
-                            Id = p.Id,
-                            Name = p.Name,
-                            Description = p.Description,
-                            Dimensions = p.Dimensions,
-                            Price = p.Price,
-                            Quantity = p.Quantity,
-                            Weight = p.Weight
-                        }).ToList()
+                        Products = safeProducts
                     });
                 }
 

@@ -48,12 +48,15 @@ public class ProductService : IProductService
         return product;
     }
 
-    public async Task<bool> DeleteProduct(string userId, string productId)
+    public async Task<bool?> DeleteProduct(string userId, string productId)
     {
         var product = await _products.GetByIdAsync(productId);
+
+        // Product not found or not owned by user → false
         if (product == null || product.UserId != userId)
             return false;
 
+        // Delete succeeds → true
         await _products.DeleteAsync(productId);
         return true;
     }

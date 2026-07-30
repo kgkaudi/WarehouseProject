@@ -1,14 +1,12 @@
-using System;
-
 namespace backend.DTOs;
 
 public class ProductReadDto
 {
-    public string Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string Dimensions { get; set; } = string.Empty;
-    public double Price { get; set; }
-    public int Quantity { get; set; }
-    public double Weight { get; set; }
+    public required string Id { get; set; }
+    public required string Name { get; set; }
+    public required string Description { get; set; }
+    public required string Dimensions { get; set; }
+    public required double Price { get; set; }
+    public required int Quantity { get; set; }
+    public required double Weight { get; set; }
 }

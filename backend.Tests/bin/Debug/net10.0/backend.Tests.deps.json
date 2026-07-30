@@ -8,7 +8,8 @@
     ".NETCoreApp,Version=v10.0": {
       "backend.Tests/1.0.0": {
         "dependencies": {
-          "Microsoft.NET.Test.Sdk": "18.3.0",
+          "Castle.Core": "5.1.1",
+          "Microsoft.NET.Test.Sdk": "18.6.0",
           "Moq": "4.20.72",
           "backend": "1.0.0",
           "xunit": "2.9.3"
@@ -58,11 +59,11 @@
           }
         }
       },
-      "Microsoft.CodeCoverage/18.3.0": {
+      "Microsoft.CodeCoverage/18.6.0": {
         "runtime": {
           "lib/net8.0/Microsoft.VisualStudio.CodeCoverage.Shim.dll": {
             "assemblyVersion": "15.0.0.0",
-            "fileVersion": "18.300.126.5501"
+            "fileVersion": "18.600.226.20102"
           }
         }
       },
@@ -130,10 +131,10 @@
           }
         }
       },
-      "Microsoft.NET.Test.Sdk/18.3.0": {
+      "Microsoft.NET.Test.Sdk/18.6.0": {
         "dependencies": {
-          "Microsoft.CodeCoverage": "18.3.0",
-          "Microsoft.TestPlatform.TestHost": "18.3.0"
+          "Microsoft.CodeCoverage": "18.6.0",
+          "Microsoft.TestPlatform.TestHost": "18.6.0"
         }
       },
       "Microsoft.OpenApi/2.4.1": {
@@ -144,19 +145,19 @@
           }
         }
       },
-      "Microsoft.TestPlatform.ObjectModel/18.3.0": {
+      "Microsoft.TestPlatform.ObjectModel/18.6.0": {
         "runtime": {
           "lib/net8.0/Microsoft.TestPlatform.CoreUtilities.dll": {
             "assemblyVersion": "15.0.0.0",
-            "fileVersion": "18.300.26.12003"
+            "fileVersion": "18.600.26.27603"
           },
           "lib/net8.0/Microsoft.TestPlatform.PlatformAbstractions.dll": {
             "assemblyVersion": "15.0.0.0",
-            "fileVersion": "18.300.26.12003"
+            "fileVersion": "18.600.26.27603"
           },
           "lib/net8.0/Microsoft.VisualStudio.TestPlatform.ObjectModel.dll": {
             "assemblyVersion": "15.0.0.0",
-            "fileVersion": "18.300.26.12003"
+            "fileVersion": "18.600.26.27603"
           }
         },
         "resources": {
@@ -240,31 +241,31 @@
           }
         }
       },
-      "Microsoft.TestPlatform.TestHost/18.3.0": {
+      "Microsoft.TestPlatform.TestHost/18.6.0": {
         "dependencies": {
-          "Microsoft.TestPlatform.ObjectModel": "18.3.0",
+          "Microsoft.TestPlatform.ObjectModel": "18.6.0",
           "Newtonsoft.Json": "13.0.3"
         },
         "runtime": {
           "lib/net8.0/Microsoft.TestPlatform.CommunicationUtilities.dll": {
             "assemblyVersion": "15.0.0.0",
-            "fileVersion": "18.300.26.12003"
+            "fileVersion": "18.600.26.27603"
           },
           "lib/net8.0/Microsoft.TestPlatform.CrossPlatEngine.dll": {
             "assemblyVersion": "15.0.0.0",
-            "fileVersion": "18.300.26.12003"
+            "fileVersion": "18.600.26.27603"
           },
           "lib/net8.0/Microsoft.TestPlatform.Utilities.dll": {
             "assemblyVersion": "15.0.0.0",
-            "fileVersion": "18.300.26.12003"
+            "fileVersion": "18.600.26.27603"
           },
           "lib/net8.0/Microsoft.VisualStudio.TestPlatform.Common.dll": {
             "assemblyVersion": "15.0.0.0",
-            "fileVersion": "18.300.26.12003"
+            "fileVersion": "18.600.26.27603"
           },
           "lib/net8.0/testhost.dll": {
             "assemblyVersion": "15.0.0.0",
-            "fileVersion": "18.300.26.12003"
+            "fileVersion": "18.600.26.27603"
           }
         },
         "resources": {
@@ -566,11 +567,8 @@
         "dependencies": {
           "Microsoft.AspNetCore.Authentication.JwtBearer": "10.0.5",
           "Microsoft.AspNetCore.OpenApi": "10.0.4",
-          "Microsoft.NET.Test.Sdk": "18.3.0",
           "MongoDB.Driver": "3.7.1",
-          "Moq": "4.20.72",
-          "Swashbuckle.AspNetCore": "10.1.5",
-          "xunit": "2.9.3"
+          "Swashbuckle.AspNetCore": "10.1.5"
         },
         "runtime": {
           "backend.dll": {
@@ -615,12 +613,12 @@
       "path": "microsoft.aspnetcore.openapi/10.0.4",
       "hashPath": "microsoft.aspnetcore.openapi.10.0.4.nupkg.sha512"
     },
-    "Microsoft.CodeCoverage/18.3.0": {
+    "Microsoft.CodeCoverage/18.6.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-23BNy/vziREC20Wwhb50K7+kZe0m07KlLWDQv4qjJ9tt3QjpDpDIqJFrhYHmMEo9xDkuSp55U/8h4bMF7MiB+g==",
-      "path": "microsoft.codecoverage/18.3.0",
-      "hashPath": "microsoft.codecoverage.18.3.0.nupkg.sha512"
+      "sha512": "sha512-bkmCXn/65Cd0LdO2zTb/ValGAJ1H8y/CgYOiBb3jsDyHI3Y1ljKx6RBvhvn3e5D/4R4I00RRwLf+Bd2Sn6bJjA==",
+      "path": "microsoft.codecoverage/18.6.0",
+      "hashPath": "microsoft.codecoverage.18.6.0.nupkg.sha512"
     },
     "Microsoft.IdentityModel.Abstractions/8.0.1": {
       "type": "package",
@@ -664,12 +662,12 @@
       "path": "microsoft.identitymodel.tokens/8.0.1",
       "hashPath": "microsoft.identitymodel.tokens.8.0.1.nupkg.sha512"
     },
-    "Microsoft.NET.Test.Sdk/18.3.0": {
+    "Microsoft.NET.Test.Sdk/18.6.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-xW3kXuWRQtgoxJp4J+gdhHSQyK+6Wb/AZDSd7lMvuMRYlZ1tnpkojyfZlWilB5G4dmZ0Y0ZxU/M23TlubndNkw==",
-      "path": "microsoft.net.test.sdk/18.3.0",
-      "hashPath": "microsoft.net.test.sdk.18.3.0.nupkg.sha512"
+      "sha512": "sha512-kAIBt0MsYR0o2RULmlW5BhQ1ha50aGEgLKG4f1p0kePBGLJCprqs3S+NxRrYN8UH7mSQRPKpeiH9mwPMEKUObQ==",
+      "path": "microsoft.net.test.sdk/18.6.0",
+      "hashPath": "microsoft.net.test.sdk.18.6.0.nupkg.sha512"
     },
     "Microsoft.OpenApi/2.4.1": {
       "type": "package",
@@ -678,19 +676,19 @@
       "path": "microsoft.openapi/2.4.1",
       "hashPath": "microsoft.openapi.2.4.1.nupkg.sha512"
     },
-    "Microsoft.TestPlatform.ObjectModel/18.3.0": {
+    "Microsoft.TestPlatform.ObjectModel/18.6.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-AEIEX2aWdPO9XbtR96eBaJxmXRD9vaI9uQ1T/JbPEKlTAZwYx0ZrMzKyULMdh/HH9Sg03kXCoN7LszQ90o6nPQ==",
-      "path": "microsoft.testplatform.objectmodel/18.3.0",
-      "hashPath": "microsoft.testplatform.objectmodel.18.3.0.nupkg.sha512"
+      "sha512": "sha512-gQTW4BIfM2ZLxixo9ITXoulLKjn20FiiHtqTsx9PENqTrX7368ZeJ5L0QZJyReXDWORPRV8jXwZR6Aar8JOyaA==",
+      "path": "microsoft.testplatform.objectmodel/18.6.0",
+      "hashPath": "microsoft.testplatform.objectmodel.18.6.0.nupkg.sha512"
     },
-    "Microsoft.TestPlatform.TestHost/18.3.0": {
+    "Microsoft.TestPlatform.TestHost/18.6.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-twmsoelXnp1uWMU3VGip9f0Jr1mZ0PZqgJdF35CIrdYgYrkHIJMV1m8uKyhcdjLdsQDESHAgkR7KhS9i1qpJag==",
-      "path": "microsoft.testplatform.testhost/18.3.0",
-      "hashPath": "microsoft.testplatform.testhost.18.3.0.nupkg.sha512"
+      "sha512": "sha512-em1eLz5Q46+hsCtAXdXggWAPd9gQyT4ngdsQ7k1eWvQgpsjtS/wAOJ/5TteieFdiAvrEq1iVn00LtusAxRaVmQ==",
+      "path": "microsoft.testplatform.testhost/18.6.0",
+      "hashPath": "microsoft.testplatform.testhost.18.6.0.nupkg.sha512"
     },
     "MongoDB.Bson/3.7.1": {
       "type": "package",
