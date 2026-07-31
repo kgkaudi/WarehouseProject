@@ -77,7 +77,7 @@ export default function AuthPage({ onLoggedIn }) {
   const login = async () => {
     try {
       const res = await api.post("/auth/login", {
-        username: form.username,
+        identifier: form.username,
         password: form.password
       });
 
@@ -86,7 +86,6 @@ export default function AuthPage({ onLoggedIn }) {
       localStorage.setItem("username", res.data.username);
       localStorage.setItem("role", res.data.role);
       onLoggedIn();
-
     } catch {
       showSnackbar("Invalid username or password.", "error");
     }
@@ -156,7 +155,7 @@ export default function AuthPage({ onLoggedIn }) {
         {mode === "login" && (
           <>
             <TextField
-              label="Username"
+              label="Username / Email"
               value={form.username}
               onChange={handleChange("username")}
             />

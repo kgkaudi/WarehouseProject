@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using Xunit;
 using Moq;
 using backend.Controllers;
 using backend.Repositories;
@@ -24,7 +20,7 @@ namespace backend.Tests
         {
             _mockUsers = new Mock<IUserRepository>();
             _mockConfig = new Mock<IConfiguration>();
-            _mockConfig.Setup(c => c["JwtKey"]).Returns("supersecretkey1234567890");
+            _mockConfig.Setup(c => c["JwtKey"]).Returns("supersecretkey1234567890ABCDEFGH"); // 33 chars
 
             _controller = new AuthController(_mockUsers.Object, _mockConfig.Object);
         }
@@ -42,7 +38,9 @@ namespace backend.Tests
             {
                 Username = "test",
                 Email = "email@test.com",
-                Password = "123"
+                Password = "123",
+                CompanyName = "TestCo",
+                CompanyAddress = "Address"
             };
 
             var result = await _controller.Register(dto) as BadRequestObjectResult;
@@ -61,7 +59,9 @@ namespace backend.Tests
             {
                 Username = "newuser",
                 Email = "email@test.com",
-                Password = "123"
+                Password = "123",
+                CompanyName = "TestCo",
+                CompanyAddress = "Address"
             };
 
             var result = await _controller.Register(dto) as BadRequestObjectResult;
@@ -80,7 +80,9 @@ namespace backend.Tests
             {
                 Username = "x",
                 Email = "x@test.com",
-                Password = "123"
+                Password = "123",
+                CompanyName = "TestCo",
+                CompanyAddress = "Address"
             };
 
             var result = await _controller.Register(dto);
@@ -199,12 +201,109 @@ namespace backend.Tests
             _mockUsers.Setup(r => r.GetByUsernameAsync("missing"))
                       .ReturnsAsync((User?)null);
 
-            var dto = new UserLoginDto { Username = "missing", Password = "123" };
+            var dto = new UserLoginDto { Identifier = "missing", Password = "123" };
 
             var result = await _controller.Login(dto) as UnauthorizedObjectResult;
 
             Assert.NotNull(result);
-            Assert.Equal("Invalid username or password", result.Value);
+            Assert.Equal("Invalid username/email or password", result.Value);
+        }
+
+        [Fact]
+        public async Task Login_WithEmail_ReturnsOk()
+        {
+            var (hash, salt) = Hash("123");
+
+            var user = new User
+            {
+                Id = "1",
+                Username = "kostas",
+                Email = "kostas@test.com",
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                EmailConfirmed = true
+            };
+
+            _mockUsers.Setup(r => r.GetByUsernameAsync(It.IsAny<string>()))
+                      .ReturnsAsync((User?)null);
+
+            _mockUsers.Setup(r => r.GetByEmailAsync(It.IsAny<string>()))
+                      .ReturnsAsync(user);
+
+            var dto = new UserLoginDto { Identifier = "kostas@test.com", Password = "123" };
+
+            var actionResult = await _controller.Login(dto);
+
+            // Temporary: surface whatever this actually is
+            if (actionResult is ObjectResult objRes)
+                Console.WriteLine($"StatusCode={objRes.StatusCode}, Value={objRes.Value}");
+
+            var result = Assert.IsType<OkObjectResult>(actionResult);
+            Assert.NotNull(result.Value);
+
+            var tokenProp = result.Value!.GetType().GetProperty("token");
+            Assert.NotNull(tokenProp);
+        }
+
+        [Fact]
+        public async Task Login_MissingIdentifier_ReturnsBadRequest()
+        {
+            var dto = new UserLoginDto { Identifier = "", Password = "123" };
+
+            var result = await _controller.Login(dto) as BadRequestObjectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("Identifier and password required", result.Value);
+        }
+
+        [Fact]
+        public async Task Login_MissingPassword_ReturnsBadRequest()
+        {
+            var dto = new UserLoginDto { Identifier = "kostas", Password = "" };
+
+            var result = await _controller.Login(dto) as BadRequestObjectResult;
+
+            Assert.NotNull(result);
+            Assert.Equal("Identifier and password required", result.Value);
+        }
+
+        [Fact]
+        public async Task Login_MalformedCredentials_Returns500()
+        {
+            var user = new User
+            {
+                Id = "1",
+                Username = "test",
+                PasswordHash = null,
+                PasswordSalt = null,
+                EmailConfirmed = true
+            };
+
+            _mockUsers.Setup(r => r.GetByUsernameAsync("test")).ReturnsAsync(user);
+
+            var dto = new UserLoginDto { Identifier = "test", Password = "123" };
+
+            var result = await _controller.Login(dto);
+
+            var obj = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, obj.StatusCode);
+        }
+
+        [Fact]
+        public async Task Login_EmailLookupThrows_Returns500()
+        {
+            _mockUsers.Setup(r => r.GetByUsernameAsync("kostas@test.com"))
+                      .ReturnsAsync((User?)null);
+
+            _mockUsers.Setup(r => r.GetByEmailAsync("kostas@test.com"))
+                      .ThrowsAsync(new Exception("DB error"));
+
+            var dto = new UserLoginDto { Identifier = "kostas@test.com", Password = "123" };
+
+            var result = await _controller.Login(dto);
+
+            var obj = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, obj.StatusCode);
         }
 
         [Fact]
@@ -221,12 +320,12 @@ namespace backend.Tests
 
             _mockUsers.Setup(r => r.GetByUsernameAsync("test")).ReturnsAsync(user);
 
-            var dto = new UserLoginDto { Username = "test", Password = "wrong" };
+            var dto = new UserLoginDto { Identifier = "test", Password = "wrong" };
 
             var result = await _controller.Login(dto) as UnauthorizedObjectResult;
 
             Assert.NotNull(result);
-            Assert.Equal("Invalid username or password", result.Value);
+            Assert.Equal("Invalid username/email or password", result.Value);
         }
 
         private (byte[] hash, byte[] salt) Hash(string password)
@@ -253,7 +352,7 @@ namespace backend.Tests
 
             _mockUsers.Setup(r => r.GetByUsernameAsync("test")).ReturnsAsync(user);
 
-            var dto = new UserLoginDto { Username = "test", Password = "123" };
+            var dto = new UserLoginDto { Identifier = "test", Password = "123" };
 
             var result = await _controller.Login(dto) as UnauthorizedObjectResult;
 
@@ -267,7 +366,7 @@ namespace backend.Tests
             _mockUsers.Setup(r => r.GetByUsernameAsync("x"))
                       .ThrowsAsync(new Exception("DB error"));
 
-            var dto = new UserLoginDto { Username = "x", Password = "123" };
+            var dto = new UserLoginDto { Identifier = "x", Password = "123" };
 
             var result = await _controller.Login(dto);
 
@@ -523,6 +622,7 @@ namespace backend.Tests
         [Fact]
         public async Task DeleteAccount_ReturnsOk()
         {
+            _mockUsers.Setup(r => r.DeleteAsync("1")).ReturnsAsync(true);
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext

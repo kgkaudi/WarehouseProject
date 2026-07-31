@@ -127,19 +127,25 @@ namespace backend.Controllers
                 if (dto == null)
                     return BadRequest("Invalid request");
 
-                if (string.IsNullOrWhiteSpace(dto.Username) ||
+                if (string.IsNullOrWhiteSpace(dto.Identifier) ||
                     string.IsNullOrWhiteSpace(dto.Password))
-                    return BadRequest("Username and password required");
+                    return BadRequest("Identifier and password required");
 
-                var user = await _users.GetByUsernameAsync(dto.Username);
+                // Try username first
+                var user = await _users.GetByUsernameAsync(dto.Identifier);
+
+                // If not found, try email
                 if (user == null)
-                    return Unauthorized("Invalid username or password");
+                    user = await _users.GetByEmailAsync(dto.Identifier);
+
+                if (user == null)
+                    return Unauthorized("Invalid username/email or password");
 
                 if (user.PasswordHash == null || user.PasswordSalt == null)
                     return StatusCode(500, "Malformed user credentials");
 
                 if (!VerifyPassword(dto.Password, user.PasswordHash, user.PasswordSalt))
-                    return Unauthorized("Invalid username or password");
+                    return Unauthorized("Invalid username/email or password");
 
                 if (!user.EmailConfirmed)
                     return Unauthorized("Email not verified");
