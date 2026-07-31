@@ -54,9 +54,9 @@ namespace backend.Controllers
 
                 var user = new User
                 {
-                    Id = Guid.NewGuid().ToString(), // FIX: prevents _id: null
-                    Username = dto.Username,
-                    Email = dto.Email,
+                    Id = Guid.NewGuid().ToString(),
+                    Username = dto.Username.Trim().ToLowerInvariant(),
+                    Email = dto.Email.Trim().ToLowerInvariant(),
                     CompanyName = dto.CompanyName,
                     CompanyAddress = dto.CompanyAddress,
                     PasswordHash = hash,
@@ -131,12 +131,12 @@ namespace backend.Controllers
                     string.IsNullOrWhiteSpace(dto.Password))
                     return BadRequest("Identifier and password required");
 
-                // Try username first
-                var user = await _users.GetByUsernameAsync(dto.Identifier);
+                var identifier = dto.Identifier.Trim().ToLowerInvariant();
 
-                // If not found, try email
+                var user = await _users.GetByUsernameAsync(identifier);
+
                 if (user == null)
-                    user = await _users.GetByEmailAsync(dto.Identifier);
+                    user = await _users.GetByEmailAsync(identifier);
 
                 if (user == null)
                     return Unauthorized("Invalid username/email or password");
