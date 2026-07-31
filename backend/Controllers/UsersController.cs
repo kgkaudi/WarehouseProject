@@ -1,62 +1,28 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs;
-using backend.Repositories;
+using backend.Service;
 using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsersController(IUserRepository users, IProductRepository products) : ControllerBase
+    public class UsersController : ControllerBase
     {
-        private readonly IUserRepository _users = users;
-        private readonly IProductRepository _products = products;
+        private readonly IUsersService _service;
 
-        // ---------------------------------------------------------
-        // GET ALL USERS + THEIR PRODUCTS
-        // ---------------------------------------------------------
+        public UsersController(IUsersService service)
+        {
+            _service = service;
+        }
+
+        // GET /api/users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserReadDto>>> GetUsers()
         {
             try
             {
-                var users = await _users.GetAllAsync();
-                if (users is null)
-                    return Ok(new List<UserReadDto>()); // no users → empty list
-
-                var result = new List<UserReadDto>();
-
-                foreach (var u in users)
-                {
-                    var products = await _products.GetByUserIdAsync(u.Id);
-
-                    // TEST REQUIREMENT:
-                    // If repository returns NULL → return 500
-                    if (products is null)
-                        return StatusCode(500, $"Failed to load products for user {u.Id}");
-
-                    var safeProducts = products.Select(p => new ProductReadDto
-                    {
-                        Id = p.Id,
-                        Name = p.Name,
-                        Description = p.Description,
-                        Dimensions = p.Dimensions,
-                        Price = p.Price,
-                        Quantity = p.Quantity,
-                        Weight = p.Weight
-                    }).ToList();
-
-                    result.Add(new UserReadDto
-                    {
-                        Id = u.Id,
-                        Username = u.Username,
-                        CompanyName = u.CompanyName,
-                        CompanyAddress = u.CompanyAddress,
-                        Role = u.Role,
-                        Products = safeProducts
-                    });
-                }
-
+                var result = await _service.GetUsersAsync();
                 return Ok(result);
             }
             catch (Exception ex)
@@ -65,26 +31,15 @@ namespace backend.Controllers
             }
         }
 
-        // ---------------------------------------------------------
-        // UPDATE USER
-        // ---------------------------------------------------------
+        // PUT /api/users/{id}
         [Authorize(Roles = "admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(string id, UserUpdateDto dto)
         {
             try
             {
-                var user = await _users.GetByIdAsync(id);
-                if (user == null)
-                    return NotFound("User not found");
-
-                user.Username = dto.Username;
-                user.CompanyName = dto.CompanyName;
-                user.CompanyAddress = dto.CompanyAddress;
-
-                await _users.UpdateAsync(user);
-
-                return Ok("User updated");
+                var success = await _service.UpdateUserAsync(id, dto);
+                return success ? Ok("User updated") : NotFound("User not found");
             }
             catch (Exception ex)
             {
@@ -92,23 +47,15 @@ namespace backend.Controllers
             }
         }
 
-        // ---------------------------------------------------------
-        // DELETE USER + THEIR PRODUCTS
-        // ---------------------------------------------------------
+        // DELETE /api/users/{id}
         [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
             try
             {
-                var user = await _users.GetByIdAsync(id);
-                if (user == null)
-                    return NotFound("User not found");
-
-                await _products.DeleteByUserIdAsync(id);
-                await _users.DeleteAsync(id);
-
-                return Ok("User deleted");
+                var success = await _service.DeleteUserAsync(id);
+                return success ? Ok("User deleted") : NotFound("User not found");
             }
             catch (Exception ex)
             {
@@ -116,23 +63,15 @@ namespace backend.Controllers
             }
         }
 
-        // ---------------------------------------------------------
-        // PROMOTE USER
-        // ---------------------------------------------------------
+        // POST /api/users/promote/{id}
         [Authorize(Roles = "admin")]
         [HttpPost("promote/{id}")]
         public async Task<IActionResult> PromoteToAdmin(string id)
         {
             try
             {
-                var user = await _users.GetByIdAsync(id);
-                if (user == null)
-                    return NotFound("User not found");
-
-                user.Role = "admin";
-                await _users.UpdateAsync(user);
-
-                return Ok("User promoted to admin");
+                var success = await _service.PromoteToAdminAsync(id);
+                return success ? Ok("User promoted to admin") : NotFound("User not found");
             }
             catch (Exception ex)
             {
@@ -140,23 +79,15 @@ namespace backend.Controllers
             }
         }
 
-        // ---------------------------------------------------------
-        // DEMOTE USER
-        // ---------------------------------------------------------
+        // POST /api/users/demote/{id}
         [Authorize(Roles = "admin")]
         [HttpPost("demote/{id}")]
         public async Task<IActionResult> DemoteToUser(string id)
         {
             try
             {
-                var user = await _users.GetByIdAsync(id);
-                if (user == null)
-                    return NotFound("User not found");
-
-                user.Role = "user";
-                await _users.UpdateAsync(user);
-
-                return Ok("User demoted to user");
+                var success = await _service.DemoteToUserAsync(id);
+                return success ? Ok("User demoted to user") : NotFound("User not found");
             }
             catch (Exception ex)
             {

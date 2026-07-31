@@ -32,6 +32,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IUsersService, UsersService>();
 
 builder.Services.AddScoped<DatabaseSeeder>();
 

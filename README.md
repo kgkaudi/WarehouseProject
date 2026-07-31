@@ -114,9 +114,7 @@ http://localhost:5173
 🧪 Running Tests
 From the project root:
 
-dotnet clean
-dotnet build
-dotnet test
+dotnet clean && dotnet build && dotnet test
 
 🔧 Environment Variables
 Your backend requires a MongoDB connection string.

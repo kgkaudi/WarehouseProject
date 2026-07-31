@@ -1,142 +1,92 @@
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 using Moq;
 using backend.Controllers;
-using backend.Repositories;
-using backend.Models;
+using backend.Service;
 using backend.DTOs;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
 
 namespace backend.Tests;
 
 public class UsersControllerTests
 {
-    private readonly Mock<IUserRepository> _mockUsers;
-    private readonly Mock<IProductRepository> _mockProducts;
+    private readonly Mock<IUsersService> _mockService;
     private readonly UsersController _controller;
 
     public UsersControllerTests()
     {
-        _mockUsers = new Mock<IUserRepository>();
-        _mockProducts = new Mock<IProductRepository>();
-
-        _controller = new UsersController(_mockUsers.Object, _mockProducts.Object);
+        _mockService = new Mock<IUsersService>();
+        _controller = new UsersController(_mockService.Object);
     }
+
+    private static UserReadDto MakeUser(string id = "1", string username = "kostas") => new()
+    {
+        Id = id,
+        Username = username,
+        CompanyName = "TestCo",
+        CompanyAddress = "Address",
+        Role = "user",
+        Products = new List<ProductReadDto>()
+    };
 
     // ---------------------------------------------------------
     // GET /api/users
     // ---------------------------------------------------------
 
     [Fact]
-    public async Task GetUsers_ReturnsUsersWithProducts()
+    public async Task GetUsers_ReturnsOk_WithUsersFromService()
     {
-        var users = new List<User>
-        {
-            new User { Id = "1", Username = "A", CompanyName = "C1" },
-            new User { Id = "2", Username = "B", CompanyName = "C2" }
-        };
+        var users = new List<UserReadDto> { MakeUser("1"), MakeUser("2", "admin") };
 
-        var productsUser1 = new List<Product>
-        {
-            new Product { Id = "p1", Name = "Prod1", UserId = "1" }
-        };
-
-        var productsUser2 = new List<Product>
-        {
-            new Product { Id = "p2", Name = "Prod2", UserId = "2" }
-        };
-
-        _mockUsers.Setup(r => r.GetAllAsync()).ReturnsAsync(users);
-        _mockProducts.Setup(r => r.GetByUserIdAsync("1")).ReturnsAsync(productsUser1);
-        _mockProducts.Setup(r => r.GetByUserIdAsync("2")).ReturnsAsync(productsUser2);
+        _mockService.Setup(s => s.GetUsersAsync()).ReturnsAsync(users);
 
         var actionResult = await _controller.GetUsers();
-        var okResult = actionResult.Result as OkObjectResult;
+        var ok = Assert.IsType<OkObjectResult>(actionResult.Result);
 
-        Assert.NotNull(okResult);
-        var dto = Assert.IsAssignableFrom<IEnumerable<UserReadDto>>(okResult.Value);
-
-        Assert.Equal(2, dto.Count());
+        var dto = Assert.IsAssignableFrom<IEnumerable<UserReadDto>>(ok.Value);
+        Assert.Equal(2, new List<UserReadDto>(dto).Count);
     }
 
     [Fact]
-    public async Task GetUsers_EmptyList_ReturnsEmptyList()
+    public async Task GetUsers_ReturnsOk_WithEmptyList()
     {
-        _mockUsers.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<User>());
+        _mockService.Setup(s => s.GetUsersAsync()).ReturnsAsync(new List<UserReadDto>());
 
-        var result = await _controller.GetUsers();
-        var ok = Assert.IsType<OkObjectResult>(result.Result);
+        var actionResult = await _controller.GetUsers();
+        var ok = Assert.IsType<OkObjectResult>(actionResult.Result);
 
         var dto = Assert.IsAssignableFrom<IEnumerable<UserReadDto>>(ok.Value);
         Assert.Empty(dto);
     }
 
     [Fact]
-    public async Task GetUsers_UserHasNoProducts_ReturnsUserWithEmptyProducts()
+    public async Task GetUsers_ServiceThrows_Returns500()
     {
-        var users = new List<User>
-        {
-            new User { Id = "1", Username = "A" }
-        };
+        _mockService.Setup(s => s.GetUsersAsync())
+                    .ThrowsAsync(new Exception("Service error"));
 
-        _mockUsers.Setup(r => r.GetAllAsync()).ReturnsAsync(users);
-        _mockProducts.Setup(r => r.GetByUserIdAsync("1")).ReturnsAsync(new List<Product>());
+        var actionResult = await _controller.GetUsers();
+        var obj = Assert.IsType<ObjectResult>(actionResult.Result);
 
-        var result = await _controller.GetUsers();
-        var ok = Assert.IsType<OkObjectResult>(result.Result);
-
-        var dto = Assert.IsAssignableFrom<IEnumerable<UserReadDto>>(ok.Value);
-        Assert.Single(dto);
-        Assert.Empty(dto.First().Products);
+        Assert.Equal(500, obj.StatusCode);
+        Assert.Equal("Service error", obj.Value);
     }
 
     [Fact]
-    public async Task GetUsers_ProductRepositoryReturnsNull_Returns500()
+    public async Task GetUsers_ServiceReturnsNull_ReturnsOkWithNullValue()
     {
-        var users = new List<User>
-        {
-            new User { Id = "1", Username = "A" }
-        };
+        // Edge case: interface declares a non-nullable IEnumerable<UserReadDto>, but the
+        // controller has no null-check of its own — if the service ever violates that
+        // contract, the controller should still pass it through as Ok(null) rather than throw.
+        _mockService.Setup(s => s.GetUsersAsync())
+                    .ReturnsAsync((IEnumerable<UserReadDto>)null!);
 
-        _mockUsers.Setup(r => r.GetAllAsync()).ReturnsAsync(users);
-        _mockProducts.Setup(r => r.GetByUserIdAsync("1")).ReturnsAsync((List<Product>)null);
+        var actionResult = await _controller.GetUsers();
+        var ok = Assert.IsType<OkObjectResult>(actionResult.Result);
 
-        var result = await _controller.GetUsers();
-        var obj = Assert.IsType<ObjectResult>(result.Result);
-        Assert.Equal(500, obj.StatusCode);
-    }
-
-    [Fact]
-    public async Task GetUsers_UsersRepositoryThrows_Returns500()
-    {
-        _mockUsers.Setup(r => r.GetAllAsync())
-                  .ThrowsAsync(new Exception("DB error"));
-
-        var result = await _controller.GetUsers();
-
-        var obj = Assert.IsType<ObjectResult>(result.Result);
-        Assert.Equal(500, obj.StatusCode);
-    }
-
-    [Fact]
-    public async Task GetUsers_ProductRepositoryThrowsInsideLoop_Returns500()
-    {
-        var users = new List<User>
-        {
-            new User { Id = "1", Username = "A" }
-        };
-
-        _mockUsers.Setup(r => r.GetAllAsync()).ReturnsAsync(users);
-        _mockProducts.Setup(r => r.GetByUserIdAsync("1"))
-                     .ThrowsAsync(new Exception("DB error"));
-
-        var result = await _controller.GetUsers();
-
-        var obj = Assert.IsType<ObjectResult>(result.Result);
-        Assert.Equal(500, obj.StatusCode);
+        Assert.Null(ok.Value);
     }
 
     // ---------------------------------------------------------
@@ -144,108 +94,80 @@ public class UsersControllerTests
     // ---------------------------------------------------------
 
     [Fact]
-    public async Task UpdateUser_UserExists_ReturnsOk()
+    public async Task UpdateUser_Success_ReturnsOk()
     {
-        var user = new User { Id = "1", Username = "Old" };
+        _mockService.Setup(s => s.UpdateUserAsync("1", It.IsAny<UserUpdateDto>()))
+                    .ReturnsAsync(true);
 
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-
-        var dto = new UserUpdateDto
-        {
-            Username = "New",
-            CompanyName = "NewCo",
-            CompanyAddress = "NewAddr"
-        };
-
-        var result = await _controller.UpdateUser("1", dto) as OkObjectResult;
+        var result = await _controller.UpdateUser("1", new UserUpdateDto()) as OkObjectResult;
 
         Assert.NotNull(result);
         Assert.Equal("User updated", result.Value);
-        Assert.Equal("New", user.Username);
-    }
-
-    [Fact]
-    public async Task UpdateUser_NullFields_UpdatesToNull()
-    {
-        var user = new User { Id = "1", Username = "Old", CompanyName = "C", CompanyAddress = "A" };
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-
-        var dto = new UserUpdateDto
-        {
-            Username = null,
-            CompanyName = null,
-            CompanyAddress = null
-        };
-
-        var result = await _controller.UpdateUser("1", dto) as OkObjectResult;
-
-        Assert.NotNull(result);
-        Assert.Null(user.Username);
-        Assert.Null(user.CompanyName);
-        Assert.Null(user.CompanyAddress);
-    }
-
-    [Fact]
-    public async Task UpdateUser_EmptyFields_UpdatesToEmpty()
-    {
-        var user = new User { Id = "1", Username = "Old" };
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-
-        var dto = new UserUpdateDto
-        {
-            Username = "",
-            CompanyName = "",
-            CompanyAddress = ""
-        };
-
-        var result = await _controller.UpdateUser("1", dto) as OkObjectResult;
-
-        Assert.NotNull(result);
-        Assert.Equal("", user.Username);
     }
 
     [Fact]
     public async Task UpdateUser_NotFound_ReturnsNotFound()
     {
-        _mockUsers.Setup(r => r.GetByIdAsync("missing")).ReturnsAsync((User)null);
+        _mockService.Setup(s => s.UpdateUserAsync("missing", It.IsAny<UserUpdateDto>()))
+                    .ReturnsAsync(false);
 
-        var dto = new UserUpdateDto();
-
-        var result = await _controller.UpdateUser("missing", dto) as NotFoundObjectResult;
+        var result = await _controller.UpdateUser("missing", new UserUpdateDto()) as NotFoundObjectResult;
 
         Assert.NotNull(result);
         Assert.Equal("User not found", result.Value);
     }
 
     [Fact]
-    public async Task UpdateUser_GetByIdThrows_Returns500()
+    public async Task UpdateUser_ServiceThrows_Returns500()
     {
-        _mockUsers.Setup(r => r.GetByIdAsync("1"))
-                  .ThrowsAsync(new Exception("DB error"));
+        _mockService.Setup(s => s.UpdateUserAsync("1", It.IsAny<UserUpdateDto>()))
+                    .ThrowsAsync(new Exception("Service error"));
 
-        var dto = new UserUpdateDto();
-
-        var result = await _controller.UpdateUser("1", dto);
+        var result = await _controller.UpdateUser("1", new UserUpdateDto());
 
         var obj = Assert.IsType<ObjectResult>(result);
         Assert.Equal(500, obj.StatusCode);
+        Assert.Equal("Service error", obj.Value);
     }
 
     [Fact]
-    public async Task UpdateUser_UpdateThrows_Returns500()
+    public async Task UpdateUser_EmptyId_ReturnsNotFound()
     {
-        var user = new User { Id = "1" };
+        // Edge case: controller does no id validation itself — an empty string id
+        // is forwarded as-is, and the service's "not found" result drives the response.
+        _mockService.Setup(s => s.UpdateUserAsync("", It.IsAny<UserUpdateDto>()))
+                    .ReturnsAsync(false);
 
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-        _mockUsers.Setup(r => r.UpdateAsync(user))
-                  .ThrowsAsync(new Exception("DB error"));
+        var result = await _controller.UpdateUser("", new UserUpdateDto()) as NotFoundObjectResult;
 
-        var dto = new UserUpdateDto();
+        Assert.NotNull(result);
+        Assert.Equal("User not found", result.Value);
+    }
 
-        var result = await _controller.UpdateUser("1", dto);
+    [Fact]
+    public async Task UpdateUser_NullDto_ForwardsToServiceWithoutValidation()
+    {
+        // Edge case: controller has no null-check on the dto; it's forwarded as-is.
+        _mockService.Setup(s => s.UpdateUserAsync("1", null!))
+                    .ReturnsAsync(true);
 
-        var obj = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, obj.StatusCode);
+        var result = await _controller.UpdateUser("1", null!) as OkObjectResult;
+
+        Assert.NotNull(result);
+        Assert.Equal("User updated", result.Value);
+        _mockService.Verify(s => s.UpdateUserAsync("1", null!), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateUser_CallsServiceWithExactIdAndDto()
+    {
+        var dto = new UserUpdateDto { Username = "new-name" };
+
+        _mockService.Setup(s => s.UpdateUserAsync("42", dto)).ReturnsAsync(true);
+
+        await _controller.UpdateUser("42", dto);
+
+        _mockService.Verify(s => s.UpdateUserAsync("42", dto), Times.Once);
     }
 
     // ---------------------------------------------------------
@@ -253,29 +175,9 @@ public class UsersControllerTests
     // ---------------------------------------------------------
 
     [Fact]
-    public async Task DeleteUser_UserExists_DeletesUserAndProducts()
+    public async Task DeleteUser_Success_ReturnsOk()
     {
-        var user = new User { Id = "1" };
-
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-
-        var result = await _controller.DeleteUser("1") as OkObjectResult;
-
-        Assert.NotNull(result);
-        Assert.Equal("User deleted", result.Value);
-
-        _mockProducts.Verify(r => r.DeleteByUserIdAsync("1"), Times.Once);
-        _mockUsers.Verify(r => r.DeleteAsync("1"), Times.Once);
-    }
-
-    [Fact]
-    public async Task DeleteUser_DeleteProductsReturnsNull_StillDeletesUser()
-    {
-        var user = new User { Id = "1" };
-
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-        _mockProducts.Setup(r => r.DeleteByUserIdAsync("1")).Returns(Task.CompletedTask);
-        _mockUsers.Setup(r => r.DeleteAsync("1")).ReturnsAsync(true);
+        _mockService.Setup(s => s.DeleteUserAsync("1")).ReturnsAsync(true);
 
         var result = await _controller.DeleteUser("1") as OkObjectResult;
 
@@ -286,7 +188,7 @@ public class UsersControllerTests
     [Fact]
     public async Task DeleteUser_NotFound_ReturnsNotFound()
     {
-        _mockUsers.Setup(r => r.GetByIdAsync("missing")).ReturnsAsync((User)null);
+        _mockService.Setup(s => s.DeleteUserAsync("missing")).ReturnsAsync(false);
 
         var result = await _controller.DeleteUser("missing") as NotFoundObjectResult;
 
@@ -295,47 +197,37 @@ public class UsersControllerTests
     }
 
     [Fact]
-    public async Task DeleteUser_GetByIdThrows_Returns500()
+    public async Task DeleteUser_ServiceThrows_Returns500()
     {
-        _mockUsers.Setup(r => r.GetByIdAsync("1"))
-                  .ThrowsAsync(new Exception("DB error"));
+        _mockService.Setup(s => s.DeleteUserAsync("1"))
+                    .ThrowsAsync(new Exception("Service error"));
 
         var result = await _controller.DeleteUser("1");
 
         var obj = Assert.IsType<ObjectResult>(result);
         Assert.Equal(500, obj.StatusCode);
+        Assert.Equal("Service error", obj.Value);
     }
 
     [Fact]
-    public async Task DeleteUser_DeleteProductsThrows_Returns500()
+    public async Task DeleteUser_WhitespaceId_ReturnsNotFound()
     {
-        var user = new User { Id = "1" };
+        _mockService.Setup(s => s.DeleteUserAsync("   ")).ReturnsAsync(false);
 
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-        _mockProducts.Setup(r => r.DeleteByUserIdAsync("1"))
-                     .ThrowsAsync(new Exception("DB error"));
+        var result = await _controller.DeleteUser("   ") as NotFoundObjectResult;
 
-        var result = await _controller.DeleteUser("1");
-
-        var obj = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, obj.StatusCode);
+        Assert.NotNull(result);
+        Assert.Equal("User not found", result.Value);
     }
 
     [Fact]
-    public async Task DeleteUser_DeleteUserThrows_Returns500()
+    public async Task DeleteUser_CallsServiceExactlyOnce()
     {
-        var user = new User { Id = "1" };
+        _mockService.Setup(s => s.DeleteUserAsync("1")).ReturnsAsync(true);
 
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-        _mockProducts.Setup(r => r.DeleteByUserIdAsync("1"))
-                     .Returns(Task.CompletedTask);
-        _mockUsers.Setup(r => r.DeleteAsync("1"))
-                  .ThrowsAsync(new Exception("DB error"));
+        await _controller.DeleteUser("1");
 
-        var result = await _controller.DeleteUser("1");
-
-        var obj = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, obj.StatusCode);
+        _mockService.Verify(s => s.DeleteUserAsync("1"), Times.Once);
     }
 
     // ---------------------------------------------------------
@@ -343,37 +235,20 @@ public class UsersControllerTests
     // ---------------------------------------------------------
 
     [Fact]
-    public async Task PromoteToAdmin_UserExists_ReturnsOk()
+    public async Task PromoteToAdmin_Success_ReturnsOk()
     {
-        var user = new User { Id = "1", Role = "user" };
-
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
+        _mockService.Setup(s => s.PromoteToAdminAsync("1")).ReturnsAsync(true);
 
         var result = await _controller.PromoteToAdmin("1") as OkObjectResult;
 
         Assert.NotNull(result);
         Assert.Equal("User promoted to admin", result.Value);
-        Assert.Equal("admin", user.Role);
-    }
-
-    [Fact]
-    public async Task PromoteToAdmin_AlreadyAdmin_ReturnsOk()
-    {
-        var user = new User { Id = "1", Role = "admin" };
-
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-
-        var result = await _controller.PromoteToAdmin("1") as OkObjectResult;
-
-        Assert.NotNull(result);
-        Assert.Equal("User promoted to admin", result.Value);
-        Assert.Equal("admin", user.Role);
     }
 
     [Fact]
     public async Task PromoteToAdmin_NotFound_ReturnsNotFound()
     {
-        _mockUsers.Setup(r => r.GetByIdAsync("missing")).ReturnsAsync((User)null);
+        _mockService.Setup(s => s.PromoteToAdminAsync("missing")).ReturnsAsync(false);
 
         var result = await _controller.PromoteToAdmin("missing") as NotFoundObjectResult;
 
@@ -382,30 +257,27 @@ public class UsersControllerTests
     }
 
     [Fact]
-    public async Task PromoteToAdmin_GetByIdThrows_Returns500()
+    public async Task PromoteToAdmin_ServiceThrows_Returns500()
     {
-        _mockUsers.Setup(r => r.GetByIdAsync("1"))
-                  .ThrowsAsync(new Exception("DB error"));
+        _mockService.Setup(s => s.PromoteToAdminAsync("1"))
+                    .ThrowsAsync(new Exception("Service error"));
 
         var result = await _controller.PromoteToAdmin("1");
 
         var obj = Assert.IsType<ObjectResult>(result);
         Assert.Equal(500, obj.StatusCode);
+        Assert.Equal("Service error", obj.Value);
     }
 
     [Fact]
-    public async Task PromoteToAdmin_UpdateThrows_Returns500()
+    public async Task PromoteToAdmin_EmptyId_ReturnsNotFound()
     {
-        var user = new User { Id = "1", Role = "user" };
+        _mockService.Setup(s => s.PromoteToAdminAsync("")).ReturnsAsync(false);
 
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-        _mockUsers.Setup(r => r.UpdateAsync(user))
-                  .ThrowsAsync(new Exception("DB error"));
+        var result = await _controller.PromoteToAdmin("") as NotFoundObjectResult;
 
-        var result = await _controller.PromoteToAdmin("1");
-
-        var obj = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, obj.StatusCode);
+        Assert.NotNull(result);
+        Assert.Equal("User not found", result.Value);
     }
 
     // ---------------------------------------------------------
@@ -413,37 +285,20 @@ public class UsersControllerTests
     // ---------------------------------------------------------
 
     [Fact]
-    public async Task DemoteToUser_UserExists_ReturnsOk()
+    public async Task DemoteToUser_Success_ReturnsOk()
     {
-        var user = new User { Id = "1", Role = "admin" };
-
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
+        _mockService.Setup(s => s.DemoteToUserAsync("1")).ReturnsAsync(true);
 
         var result = await _controller.DemoteToUser("1") as OkObjectResult;
 
         Assert.NotNull(result);
         Assert.Equal("User demoted to user", result.Value);
-        Assert.Equal("user", user.Role);
-    }
-
-    [Fact]
-    public async Task DemoteToUser_AlreadyUser_ReturnsOk()
-    {
-        var user = new User { Id = "1", Role = "user" };
-
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-
-        var result = await _controller.DemoteToUser("1") as OkObjectResult;
-
-        Assert.NotNull(result);
-        Assert.Equal("User demoted to user", result.Value);
-        Assert.Equal("user", user.Role);
     }
 
     [Fact]
     public async Task DemoteToUser_NotFound_ReturnsNotFound()
     {
-        _mockUsers.Setup(r => r.GetByIdAsync("missing")).ReturnsAsync((User)null);
+        _mockService.Setup(s => s.DemoteToUserAsync("missing")).ReturnsAsync(false);
 
         var result = await _controller.DemoteToUser("missing") as NotFoundObjectResult;
 
@@ -452,29 +307,28 @@ public class UsersControllerTests
     }
 
     [Fact]
-    public async Task DemoteToUser_GetByIdThrows_Returns500()
+    public async Task DemoteToUser_ServiceThrows_Returns500()
     {
-        _mockUsers.Setup(r => r.GetByIdAsync("1"))
-                  .ThrowsAsync(new Exception("DB error"));
+        _mockService.Setup(s => s.DemoteToUserAsync("1"))
+                    .ThrowsAsync(new Exception("Service error"));
 
         var result = await _controller.DemoteToUser("1");
 
         var obj = Assert.IsType<ObjectResult>(result);
         Assert.Equal(500, obj.StatusCode);
+        Assert.Equal("Service error", obj.Value);
     }
 
     [Fact]
-    public async Task DemoteToUser_UpdateThrows_Returns500()
+    public async Task DemoteToUser_NullId_ForwardsToServiceAndReturnsNotFound()
     {
-        var user = new User { Id = "1", Role = "admin" };
+        // Edge case: string id parameters aren't validated by the controller,
+        // so even a null id is passed straight through to the service.
+        _mockService.Setup(s => s.DemoteToUserAsync(null!)).ReturnsAsync(false);
 
-        _mockUsers.Setup(r => r.GetByIdAsync("1")).ReturnsAsync(user);
-        _mockUsers.Setup(r => r.UpdateAsync(user))
-                  .ThrowsAsync(new Exception("DB error"));
+        var result = await _controller.DemoteToUser(null!) as NotFoundObjectResult;
 
-        var result = await _controller.DemoteToUser("1");
-
-        var obj = Assert.IsType<ObjectResult>(result);
-        Assert.Equal(500, obj.StatusCode);
+        Assert.NotNull(result);
+        Assert.Equal("User not found", result.Value);
     }
 }
