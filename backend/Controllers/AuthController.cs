@@ -32,6 +32,16 @@ namespace backend.Controllers
         {
             try
             {
+                if (dto == null)
+                    return BadRequest("Invalid request");
+
+                if (string.IsNullOrWhiteSpace(dto.Username) ||
+                    string.IsNullOrWhiteSpace(dto.Email) ||
+                    string.IsNullOrWhiteSpace(dto.Password) ||
+                    string.IsNullOrWhiteSpace(dto.CompanyName) ||
+                    string.IsNullOrWhiteSpace(dto.CompanyAddress))
+                    return BadRequest("All fields are required");
+
                 if (await _users.UsernameExistsAsync(dto.Username))
                     return BadRequest("Username already exists");
 
@@ -44,6 +54,7 @@ namespace backend.Controllers
 
                 var user = new User
                 {
+                    Id = Guid.NewGuid().ToString(), // FIX: prevents _id: null
                     Username = dto.Username,
                     Email = dto.Email,
                     CompanyName = dto.CompanyName,
@@ -78,10 +89,18 @@ namespace backend.Controllers
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(token))
+                    return BadRequest("Token required");
+
                 var user = await _users.GetByEmailVerificationTokenAsync(token);
 
-                if (user == null || user.EmailVerificationTokenExpires <= DateTime.UtcNow)
+                if (user == null ||
+                    user.EmailVerificationTokenExpires == null ||
+                    user.EmailVerificationTokenExpires <= DateTime.UtcNow)
                     return BadRequest("Invalid or expired token");
+
+                if (user.EmailConfirmed)
+                    return Ok("Email already verified");
 
                 user.EmailConfirmed = true;
                 user.EmailVerificationToken = null;
@@ -105,9 +124,19 @@ namespace backend.Controllers
         {
             try
             {
+                if (dto == null)
+                    return BadRequest("Invalid request");
+
+                if (string.IsNullOrWhiteSpace(dto.Username) ||
+                    string.IsNullOrWhiteSpace(dto.Password))
+                    return BadRequest("Username and password required");
+
                 var user = await _users.GetByUsernameAsync(dto.Username);
                 if (user == null)
                     return Unauthorized("Invalid username or password");
+
+                if (user.PasswordHash == null || user.PasswordSalt == null)
+                    return StatusCode(500, "Malformed user credentials");
 
                 if (!VerifyPassword(dto.Password, user.PasswordHash, user.PasswordSalt))
                     return Unauthorized("Invalid username or password");
@@ -115,7 +144,11 @@ namespace backend.Controllers
                 if (!user.EmailConfirmed)
                     return Unauthorized("Email not verified");
 
+                if (string.IsNullOrWhiteSpace(_config["JwtKey"]))
+                    return StatusCode(500, "JWT key missing");
+
                 var token = GenerateJwtToken(user);
+
                 return Ok(new { token, username = user.Username, role = user.Role });
             }
             catch (Exception ex)
@@ -132,7 +165,11 @@ namespace backend.Controllers
         {
             try
             {
+                if (dto == null || string.IsNullOrWhiteSpace(dto.Email))
+                    return BadRequest("Email required");
+
                 var user = await _users.GetByEmailAsync(dto.Email);
+
                 if (user == null)
                     return Ok("If the email exists, a reset token will be returned.");
 
@@ -161,9 +198,16 @@ namespace backend.Controllers
         {
             try
             {
+                if (dto == null ||
+                    string.IsNullOrWhiteSpace(dto.Token) ||
+                    string.IsNullOrWhiteSpace(dto.NewPassword))
+                    return BadRequest("Token and new password required");
+
                 var user = await _users.GetByPasswordResetTokenAsync(dto.Token);
 
-                if (user == null || user.PasswordResetTokenExpires <= DateTime.UtcNow)
+                if (user == null ||
+                    user.PasswordResetTokenExpires == null ||
+                    user.PasswordResetTokenExpires <= DateTime.UtcNow)
                     return BadRequest("Invalid or expired token");
 
                 CreatePasswordHash(dto.NewPassword, out byte[] hash, out byte[] salt);
@@ -192,7 +236,16 @@ namespace backend.Controllers
         {
             try
             {
-                var userId = User.FindFirst("UserId")!.Value;
+                if (dto == null ||
+                    string.IsNullOrWhiteSpace(dto.CurrentPassword) ||
+                    string.IsNullOrWhiteSpace(dto.NewPassword))
+                    return BadRequest("Current and new password required");
+
+                var userIdClaim = User.FindFirst("UserId");
+                if (userIdClaim == null)
+                    return Unauthorized("Invalid token");
+
+                var userId = userIdClaim.Value;
                 var user = await _users.GetByIdAsync(userId);
 
                 if (user == null)
@@ -225,9 +278,16 @@ namespace backend.Controllers
         {
             try
             {
-                var userId = User.FindFirst("UserId")!.Value;
+                var userIdClaim = User.FindFirst("UserId");
+                if (userIdClaim == null)
+                    return Unauthorized("Invalid token");
 
-                await _users.DeleteAsync(userId);
+                var userId = userIdClaim.Value;
+
+                var deleted = await _users.DeleteAsync(userId);
+
+                if (!deleted)
+                    return StatusCode(500, "Delete failed");
 
                 return Ok("Account deleted");
             }
@@ -256,17 +316,18 @@ namespace backend.Controllers
 
         private string GenerateJwtToken(User user)
         {
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["JwtKey"]!)
-            );
+            var keyString = _config["JwtKey"];
+            if (string.IsNullOrWhiteSpace(keyString))
+                throw new Exception("JWT key missing");
 
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
                 new Claim("UserId", user.Id),
                 new Claim("Username", user.Username),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role ?? "user")
             };
 
             var token = new JwtSecurityToken(

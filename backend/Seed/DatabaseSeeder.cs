@@ -29,6 +29,7 @@ namespace backend.Seed
 
                 admin = new User
                 {
+                    Id = Guid.NewGuid().ToString(),
                     Username = "admin",
                     Email = "admin@test.com",
                     CompanyName = "Admin Company",
@@ -52,6 +53,7 @@ namespace backend.Seed
             {
                 var product = new Product
                 {
+                    Id = Guid.NewGuid().ToString(),
                     UserId = admin.Id,
                     Name = "Test Product",
                     Description = "This is a seeded test product",
