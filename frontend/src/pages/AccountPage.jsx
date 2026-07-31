@@ -9,8 +9,11 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  IconButton,
+  InputAdornment
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import api from "../api";
 
 export default function AccountPage() {
@@ -23,6 +26,10 @@ export default function AccountPage() {
   const [error, setError] = useState("");
 
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  // visibility toggles
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const handleChange = (field) => (e) =>
     setChangeForm({ ...changeForm, [field]: e.target.value });
@@ -53,6 +60,7 @@ export default function AccountPage() {
 
   return (
     <Stack spacing={3}>
+      {/* CHANGE PASSWORD */}
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6">Change Password</Typography>
 
@@ -89,15 +97,41 @@ export default function AccountPage() {
         <Stack spacing={2} sx={{ mt: 2 }}>
           <TextField
             label="Current Password"
-            type="password"
+            type={showCurrentPassword ? "text" : "password"}
             value={changeForm.currentPassword}
             onChange={handleChange("currentPassword")}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() =>
+                      setShowCurrentPassword((prev) => !prev)
+                    }
+                    edge="end"
+                  >
+                    {showCurrentPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
           />
           <TextField
             label="New Password"
-            type="password"
+            type={showNewPassword ? "text" : "password"}
             value={changeForm.newPassword}
             onChange={handleChange("newPassword")}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowNewPassword((prev) => !prev)}
+                    edge="end"
+                  >
+                    {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
           />
           <Button variant="contained" onClick={changePassword}>
             Change Password
@@ -105,6 +139,7 @@ export default function AccountPage() {
         </Stack>
       </Paper>
 
+      {/* DANGER ZONE */}
       <Paper sx={{ p: 2 }}>
         <Typography variant="h6" color="error">
           Danger Zone
@@ -119,12 +154,13 @@ export default function AccountPage() {
         </Button>
       </Paper>
 
-      {/* Confirmation Dialog */}
+      {/* CONFIRM DELETE DIALOG */}
       <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)}>
         <DialogTitle>Delete Account</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete your account? This action cannot be undone.
+            Are you sure you want to delete your account? This action cannot be
+            undone.
           </Typography>
         </DialogContent>
         <DialogActions>
