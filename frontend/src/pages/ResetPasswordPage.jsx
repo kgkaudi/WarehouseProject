@@ -7,8 +7,11 @@ import {
   Paper,
   Stack,
   Snackbar,
-  Alert
+  Alert,
+  IconButton,
+  InputAdornment
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 
@@ -18,6 +21,8 @@ export default function ResetPasswordPage() {
     token: "",
     newPassword: ""
   });
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -88,10 +93,25 @@ export default function ResetPasswordPage() {
 
         <TextField
           label="New Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           fullWidth
           value={form.newPassword}
           onChange={handleChange("newPassword")}
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }
+          }}
         />
 
         <Button variant="contained" onClick={resetPassword}>

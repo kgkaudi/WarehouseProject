@@ -91,9 +91,7 @@ Install dependencies
 dotnet restore
 
 ## Run the backend
-dotnet clean
-dotnet build
-dotnet run
+dotnet clean && dotnet build && dotnet run
 
 The API will start on:
 http://localhost:5000
