@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using backend.Repositories;
-using backend.Models;
+using backend.Service;
 
 namespace backend.Controllers
 {
@@ -10,22 +9,20 @@ namespace backend.Controllers
     [Authorize(Policy = "AdminOnly")]
     public class AdminController : ControllerBase
     {
-        private readonly IUserRepository _users;
+        private readonly IAdminService _adminService;
 
-        public AdminController(IUserRepository users)
+        public AdminController(IAdminService adminService)
         {
-            _users = users;
+            _adminService = adminService;
         }
 
-        // ---------------------------------------------------------
         // GET /api/admin/users
-        // ---------------------------------------------------------
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
             try
             {
-                var users = await _users.GetAllAsync();
+                var users = await _adminService.GetAllUsersAsync();
 
                 if (users == null)
                     return StatusCode(500, "Repository returned null");
@@ -41,9 +38,7 @@ namespace backend.Controllers
             }
         }
 
-        // ---------------------------------------------------------
         // PUT /api/admin/promote/{id}
-        // ---------------------------------------------------------
         [HttpPut("promote/{id}")]
         public async Task<IActionResult> PromoteToAdmin(string id)
         {
@@ -52,20 +47,10 @@ namespace backend.Controllers
                 if (string.IsNullOrWhiteSpace(id))
                     return BadRequest("Invalid user id");
 
-                var user = await _users.GetByIdAsync(id);
+                var success = await _adminService.PromoteToAdminAsync(id);
 
-                if (user == null)
+                if (!success)
                     return NotFound("User not found");
-
-                if (string.IsNullOrWhiteSpace(user.Id))
-                    return StatusCode(500, "Repository returned invalid user");
-
-                if (string.Equals(user.Role, "admin", StringComparison.OrdinalIgnoreCase))
-                    return Ok("User is already admin");
-
-                user.Role = "admin";
-
-                await _users.UpdateAsync(user);
 
                 return Ok("User promoted to admin");
             }
@@ -75,9 +60,7 @@ namespace backend.Controllers
             }
         }
 
-        // ---------------------------------------------------------
         // DELETE /api/admin/delete/{id}
-        // ---------------------------------------------------------
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
@@ -86,17 +69,10 @@ namespace backend.Controllers
                 if (string.IsNullOrWhiteSpace(id))
                     return BadRequest("Invalid user id");
 
-                var user = await _users.GetByIdAsync(id);
-                if (user == null)
-                    return NotFound("User not found");
+                var success = await _adminService.DeleteUserAsync(id);
 
-                if (string.IsNullOrWhiteSpace(user.Id))
-                    return StatusCode(500, "Repository returned invalid user");
-
-                var deleted = await _users.DeleteAsync(id);
-
-                if (!deleted)
-                    return StatusCode(500, "Delete failed");
+                if (!success)
+                    return NotFound("User not found or delete failed");
 
                 return Ok("User deleted");
             }

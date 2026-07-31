@@ -9,7 +9,11 @@ using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ---------------------------------------------------------
+// SERVICES & CONFIG
+// ---------------------------------------------------------
 builder.Services.AddControllers();
+
 builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection("MongoDbSettings"));
 
@@ -19,12 +23,21 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddOpenApi();
 
+// ---------------------------------------------------------
+// DEPENDENCY INJECTION
+// ---------------------------------------------------------
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
-builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+
 builder.Services.AddScoped<DatabaseSeeder>();
 
+// ---------------------------------------------------------
+// AUTHENTICATION (JWT)
+// ---------------------------------------------------------
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -39,11 +52,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// ---------------------------------------------------------
+// AUTHORIZATION
+// ---------------------------------------------------------
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("admin"));
 });
 
+// ---------------------------------------------------------
+// CORS
+// ---------------------------------------------------------
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 builder.Services.AddCors(options =>
@@ -60,6 +79,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// ---------------------------------------------------------
+// MIDDLEWARE
+// ---------------------------------------------------------
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -73,6 +95,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// ---------------------------------------------------------
+// DATABASE SEEDING
+// ---------------------------------------------------------
 using (var scope = app.Services.CreateScope())
 {
     var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
