@@ -1,9 +1,12 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
+import { setupInterceptors } from "../api/axios";
+import { useSnackbar } from "./SnackbarContext";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const { showSnackbar } = useSnackbar();
+
   const [token, setToken] = useState(() => localStorage.getItem("token"));
   const [user, setUser] = useState(() => {
     try {
@@ -41,6 +44,13 @@ export function AuthProvider({ children }) {
   };
 
   // ---------------------------------------------------------
+  // INSTALL AXIOS INTERCEPTORS (after login/logout exist)
+  // ---------------------------------------------------------
+  useEffect(() => {
+    setupInterceptors(logout, showSnackbar);
+  }, [logout, showSnackbar]);
+
+  // ---------------------------------------------------------
   // AUTO‑LOGOUT WHEN TOKEN EXPIRES
   // ---------------------------------------------------------
   useEffect(() => {
@@ -63,22 +73,6 @@ export function AuthProvider({ children }) {
     } catch {
       logout();
     }
-  }, [token]);
-
-  // ---------------------------------------------------------
-  // AXIOS INTERCEPTOR (with cleanup)
-  // ---------------------------------------------------------
-  useEffect(() => {
-    const interceptor = axios.interceptors.request.use((config) => {
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    });
-
-    return () => {
-      axios.interceptors.request.eject(interceptor);
-    };
   }, [token]);
 
   return (

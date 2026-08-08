@@ -214,10 +214,11 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <SnackbarProvider>
+    <SnackbarProvider>
+      <AuthProvider>
         <AppContent />
-      </SnackbarProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </SnackbarProvider>
+
   );
 }

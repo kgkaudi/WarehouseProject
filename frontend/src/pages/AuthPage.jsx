@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import api from "../api/axios";
 
 import {
   TextField,
@@ -17,8 +18,6 @@ import {
 
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
-
-import api from "../api";
 
 export default function AuthPage() {
   const { login: authLogin } = useAuth();
@@ -82,7 +81,6 @@ export default function AuthPage() {
 
       const { token, username, role, companyName, companyAddress } = res.data;
 
-      // Construct a proper user object
       const userData = {
         username,
         role,
