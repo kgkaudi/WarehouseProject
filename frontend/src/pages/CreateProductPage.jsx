@@ -9,7 +9,7 @@ import {
   Alert
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import api from "../api";
+import api from "../api/axios.js";
 
 export default function CreateProductPage() {
   const [form, setForm] = useState({

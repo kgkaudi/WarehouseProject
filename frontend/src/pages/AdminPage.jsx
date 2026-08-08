@@ -21,7 +21,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
-import api from "../api";
+import api from "../api/axios.js";
 import { useSnackbar } from "../context/SnackbarContext";
 
 export default function AdminPage() {

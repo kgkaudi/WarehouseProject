@@ -14,7 +14,7 @@ import {
   InputAdornment
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import api from "../api";
+import api from "../api/axios.js";
 
 export default function AccountPage() {
   const [changeForm, setChangeForm] = useState({

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, TextField, Button, Typography, Paper, Stack, Snackbar, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import api from "../api";
+import api from "../api/axios.js";
 
 export default function VerifyEmailPage() {
   const [token, setToken] = useState("");
