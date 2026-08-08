@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TextField, IconButton, InputAdornment } from "@mui/material";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { useAuth } from "../context/AuthContext.jsx";
 
 import {
+  TextField,
+  IconButton,
+  InputAdornment,
   Box,
   Button,
   Typography,
@@ -13,17 +14,18 @@ import {
   Snackbar,
   Alert
 } from "@mui/material";
+
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+
 import api from "../api";
 
-export default function AuthPage({ onLoggedIn }) {
-  const [verificationToken, setVerificationToken] = useState("");
-  const [mode, setMode] = useState("login");
+export default function AuthPage() {
+  const { login: authLogin } = useAuth();
+  const navigate = useNavigate();
 
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success"
-  });
+  const [mode, setMode] = useState("login");
+  const [verificationToken, setVerificationToken] = useState("");
 
   const [form, setForm] = useState({
     username: "",
@@ -31,28 +33,26 @@ export default function AuthPage({ onLoggedIn }) {
     password: "",
     companyName: "",
     companyAddress: "",
-    resetEmail: "",
-    resetToken: "",
-    newPassword: ""
   });
 
-  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (field) => (e) =>
-    setForm({ ...form, [field]: e.target.value });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success"
+  });
 
   const showSnackbar = (message, severity = "success") => {
     setSnackbar({ open: true, message, severity });
   };
 
-  const switchMode = (newMode) => {
-    setMode(newMode);
-  };
+  const handleChange = (field) => (e) =>
+    setForm({ ...form, [field]: e.target.value });
 
-  // -----------------------------
+  // ---------------------------------------------------------
   // REGISTER
-  // -----------------------------
+  // ---------------------------------------------------------
   const register = async () => {
     try {
       const res = await api.post("/auth/register", {
@@ -64,16 +64,15 @@ export default function AuthPage({ onLoggedIn }) {
       });
 
       setVerificationToken(res.data.verificationToken);
-      showSnackbar("Registered successfully! Your verification token is shown below.", "success");
-
+      showSnackbar("Registered successfully! Your verification token is shown below.");
     } catch {
       showSnackbar("Registration failed. Check your details.", "error");
     }
   };
 
-  // -----------------------------
+  // ---------------------------------------------------------
   // LOGIN
-  // -----------------------------
+  // ---------------------------------------------------------
   const login = async () => {
     try {
       const res = await api.post("/auth/login", {
@@ -81,11 +80,20 @@ export default function AuthPage({ onLoggedIn }) {
         password: form.password
       });
 
-      showSnackbar("Login successful!", "success");
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("username", res.data.username);
-      localStorage.setItem("role", res.data.role);
-      onLoggedIn();
+      const { token, username, role, companyName, companyAddress } = res.data;
+
+      // Construct a proper user object
+      const userData = {
+        username,
+        role,
+        companyName,
+        companyAddress
+      };
+
+      authLogin(token, userData);
+
+      showSnackbar("Login successful!");
+      navigate("/products");
     } catch {
       showSnackbar("Invalid username or password.", "error");
     }
@@ -103,6 +111,7 @@ export default function AuthPage({ onLoggedIn }) {
           <>
             <TextField label="Username" value={form.username} onChange={handleChange("username")} />
             <TextField label="Email" value={form.email} onChange={handleChange("email")} />
+
             <TextField
               label="Password"
               type={showPassword ? "text" : "password"}
@@ -118,22 +127,14 @@ export default function AuthPage({ onLoggedIn }) {
                 )
               }}
             />
+
             <TextField label="Company Name" value={form.companyName} onChange={handleChange("companyName")} />
             <TextField label="Company Address" value={form.companyAddress} onChange={handleChange("companyAddress")} />
 
             <Button variant="contained" onClick={register}>Register</Button>
 
-            {/* VERIFICATION TOKEN BOX */}
             {verificationToken && (
-              <Box
-                sx={{
-                  p: 2,
-                  mb: 2,
-                  borderRadius: 1,
-                  bgcolor: "#e3f2fd",
-                  border: "1px solid #90caf9"
-                }}
-              >
+              <Box sx={{ p: 2, mb: 2, borderRadius: 1, bgcolor: "#e3f2fd", border: "1px solid #90caf9" }}>
                 <Typography variant="subtitle1" sx={{ mb: 1 }}>
                   Your verification token
                 </Typography>
@@ -147,7 +148,7 @@ export default function AuthPage({ onLoggedIn }) {
               </Box>
             )}
 
-            <Button onClick={() => switchMode("login")}>Already have an account? Login</Button>
+            <Button onClick={() => setMode("login")}>Already have an account? Login</Button>
           </>
         )}
 
@@ -177,7 +178,7 @@ export default function AuthPage({ onLoggedIn }) {
             />
 
             <Button variant="contained" onClick={login}>Login</Button>
-            <Button onClick={() => switchMode("register")}>
+            <Button onClick={() => setMode("register")}>
               Need an account? Register
             </Button>
           </>
@@ -187,7 +188,6 @@ export default function AuthPage({ onLoggedIn }) {
         <Button onClick={() => navigate("/reset-password")}>Forgot Password?</Button>
       </Stack>
 
-      {/* SNACKBAR */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
