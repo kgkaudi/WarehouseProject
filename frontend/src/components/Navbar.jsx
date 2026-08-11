@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -17,13 +17,14 @@ import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Navbar({ darkMode, setDarkMode, setDrawerOpen }) {
   const { isLoggedIn, logout, role, user } = useAuth();
+  const location = useLocation();
 
   const navItems = [
     { label: "Products", to: "/products" },
     { label: "Account", to: "/account" }
   ];
 
-  const isActive = (path) => window.location.pathname === path;
+  const isActive = (path) => location.pathname === path;
 
   return (
     <AppBar position="static">
