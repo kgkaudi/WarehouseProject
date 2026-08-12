@@ -1,5 +1,3 @@
----
-
 # 📦 Warehouse Management System
 
 A full‑stack warehouse management application built with:
