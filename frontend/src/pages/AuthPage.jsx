@@ -106,80 +106,94 @@ export default function AuthPage() {
 
         {/* REGISTER MODE */}
         {mode === "register" && (
-          <>
-            <TextField label="Username" value={form.username} onChange={handleChange("username")} />
-            <TextField label="Email" value={form.email} onChange={handleChange("email")} />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              register();
+            }}
+          >
+            <Stack spacing={2}>
+              <TextField label="Username" value={form.username} onChange={handleChange("username")} />
+              <TextField label="Email" value={form.email} onChange={handleChange("email")} />
 
-            <TextField
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              value={form.password}
-              onChange={handleChange("password")}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                )
-              }}
-            />
+              <TextField
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange("password")}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+              />
 
-            <TextField label="Company Name" value={form.companyName} onChange={handleChange("companyName")} />
-            <TextField label="Company Address" value={form.companyAddress} onChange={handleChange("companyAddress")} />
+              <TextField label="Company Name" value={form.companyName} onChange={handleChange("companyName")} />
+              <TextField label="Company Address" value={form.companyAddress} onChange={handleChange("companyAddress")} />
 
-            <Button variant="contained" onClick={register}>Register</Button>
+              <Button type="submit" variant="contained">Register</Button>
 
-            {verificationToken && (
-              <Box sx={{ p: 2, mb: 2, borderRadius: 1, bgcolor: "#e3f2fd", border: "1px solid #90caf9" }}>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                  Your verification token
-                </Typography>
+              {verificationToken && (
+                <Box sx={{ p: 2, mb: 2, borderRadius: 1, bgcolor: "#e3f2fd", border: "1px solid #90caf9" }}>
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                    Your verification token
+                  </Typography>
 
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <TextField value={verificationToken} fullWidth InputProps={{ readOnly: true }} />
-                  <Button variant="contained" onClick={() => navigator.clipboard.writeText(verificationToken)}>
-                    Copy
-                  </Button>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <TextField value={verificationToken} fullWidth InputProps={{ readOnly: true }} />
+                    <Button variant="contained" onClick={() => navigator.clipboard.writeText(verificationToken)}>
+                      Copy
+                    </Button>
+                  </Box>
                 </Box>
-              </Box>
-            )}
+              )}
 
-            <Button onClick={() => setMode("login")}>Already have an account? Login</Button>
-          </>
+              <Button onClick={() => setMode("login")}>Already have an account? Login</Button>
+            </Stack>
+          </form>
         )}
 
         {/* LOGIN MODE */}
         {mode === "login" && (
-          <>
-            <TextField
-              label="Username / Email"
-              value={form.username}
-              onChange={handleChange("username")}
-            />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              login();
+            }}
+          >
+            <Stack spacing={2}>
+              <TextField
+                label="Username / Email"
+                value={form.username}
+                onChange={handleChange("username")}
+              />
 
-            <TextField
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              value={form.password}
-              onChange={handleChange("password")}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                )
-              }}
-            />
+              <TextField
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                onChange={handleChange("password")}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
+              />
 
-            <Button variant="contained" onClick={login}>Login</Button>
-            <Button onClick={() => setMode("register")}>
-              Need an account? Register
-            </Button>
-          </>
+              <Button type="submit" variant="contained">Login</Button>
+              <Button onClick={() => setMode("register")}>
+                Need an account? Register
+              </Button>
+            </Stack>
+          </form>
         )}
 
         <Button onClick={() => navigate("/verify-email")}>Verify Email</Button>

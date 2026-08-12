@@ -26,9 +26,13 @@ export function setupInterceptors(logout, showSnackbar) {
       const status = error.response?.status;
 
       if (status === 401) {
-        showSnackbar("Session expired. Please log in again.", "error");
-        logout();
-        window.location.href = "/login";
+        const isLoginRequest = error.config?.url?.includes("/auth/login");
+
+        if (!isLoginRequest) {
+          showSnackbar("Session expired. Please log in again.", "error");
+          logout();
+          window.location.href = "/login";
+        }
       }
 
       if (status >= 500) {
