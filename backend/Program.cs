@@ -83,7 +83,7 @@ var app = builder.Build();
 // ---------------------------------------------------------
 // MIDDLEWARE
 // ---------------------------------------------------------
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("EnableSwagger"))
 {
     app.MapOpenApi();
     app.UseSwagger();

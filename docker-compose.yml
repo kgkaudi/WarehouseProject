@@ -1,0 +1,30 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: warehouse-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development   # was Production; enables Swagger
+      ASPNETCORE_URLS: http://+:5266
+      JwtKey: ${JWT_KEY:?Set JWT_KEY in the root .env file}
+      MongoDbSettings__ConnectionString: mongodb://host.docker.internal:27017/KostasEvents
+      MongoDbSettings__DatabaseName: WarehouseDb
+    ports:
+      - "5266:5266"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: warehouse-web
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend

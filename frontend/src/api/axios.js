@@ -1,10 +1,8 @@
 import axios from "axios";
-import { useAuth } from "../context/AuthContext";
-import { useSnackbar } from "../context/SnackbarContext";
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5266/api"
+  baseURL: import.meta.env.VITE_API_URL || "/api",
 });
 
 // Attach interceptors

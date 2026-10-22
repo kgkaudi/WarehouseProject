@@ -108,3 +108,6 @@ coverage/
 *.coverage
 *.coveragexml
 TestResults/
+
+# Docker Compose secrets
+.env
